@@ -14,6 +14,7 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -27,8 +28,11 @@ public class MainActivity extends AppCompatActivity {
 
     private BluetoothDevice mDevice;
     private String TAG = "MainActivity";
+    private String DEVICE_NAME = "Adafruit Bluefruit LE";
 
     private BluetoothAdapter mBluetoothAdapter;
+    private TextView mTvDeviceInfo;
+    private TextView mTvTemperature;
 
 
     @Override
@@ -38,10 +42,13 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        mTvDeviceInfo = (TextView) findViewById(R.id.tvDeviceInfo);
+        mTvTemperature = (TextView) findViewById(R.id.tvTemperature);
 
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if (mBluetoothAdapter == null) {
-            Toast.makeText(this, "Not Bluetooth supported", Toast.LENGTH_LONG);
+            mTvDeviceInfo.setText("Not Bluetooth supported");
+            return;
         }
 
 
@@ -51,21 +58,20 @@ public class MainActivity extends AppCompatActivity {
         }
 
         Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
-        if (pairedDevices.size() > 0) {
-            for (BluetoothDevice device : pairedDevices) {
-                Log.d(TAG, "DEVICE NAME: " + device.getName());
+        for (BluetoothDevice device : pairedDevices) {
+            Log.d(TAG, "DEVICE NAME: " + device.getName());
 
-                //String deviceName = "Galaxy Buds+ (FDF8)";
-                String deviceName = "Adafruit Bluefruit LE";
-
-                if (device.getName().equals(deviceName))
-                    mDevice = device;
-            }
+            //String deviceName = "Galaxy Buds+ (FDF8)";
+            if (device.getName().equals(DEVICE_NAME))
+                mDevice = device;
         }
 
-        if (mDevice == null)
+
+        if (mDevice == null) {
+            mTvDeviceInfo.setText("Device \'" + DEVICE_NAME + "\' Not Found");
             Log.d(TAG, "DEVICE NOT FOUND");
-        else {
+        } else {
+            mTvDeviceInfo.setText("Device \'" + DEVICE_NAME + "\' Found)");
             Log.d(TAG, "DEVICE FOUND : " + mDevice.getName());
             connect();
         }
@@ -94,9 +100,11 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
             if (status == BluetoothGatt.GATT_SUCCESS && newState == BluetoothProfile.STATE_CONNECTED) {
+                mTvDeviceInfo.setText("Device Connected");
                 Log.i(TAG, "Connected to GATT server.");
                 gatt.discoverServices();
             } else {
+                mTvDeviceInfo.setText("Device NOT Connected");
                 Log.i(TAG, "Disconnected from GATT server.");
             }
         }
@@ -106,6 +114,7 @@ public class MainActivity extends AppCompatActivity {
             Log.d(TAG, "GATT CALLBACK : onServicesDiscovered");
 
             if (status != BluetoothGatt.GATT_SUCCESS) {
+                mTvDeviceInfo.setText("ERROR discovering services");
                 Log.w(TAG, "ERROR onServicesDiscovered received: " + status);
                 return;
             }
@@ -125,18 +134,21 @@ public class MainActivity extends AppCompatActivity {
             BluetoothGattDescriptor desc = rx.getDescriptor(CLIENT_UUID);
             if (desc == null) {
                 // Stop if the RX characteristic has no client descriptor.
+                mTvDeviceInfo.setText("ERROR descriptor not found");
                 Log.d(TAG, "ERROR 2: desc");
                 return;
             }
             desc.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
             if (!gatt.writeDescriptor(desc)) {
                 // Stop if the client descriptor could not be written.
+                mTvDeviceInfo.setText("ERROR writting descriptor");
                 Log.d(TAG, "ERROR 3: writeDescriptor");
                 return;
             }
 
 
             // Notify of connection completion.
+            mTvDeviceInfo.setText("Connected to UART service");
             Log.d(TAG, "SUCCESS??");
             gatt.setCharacteristicNotification(rx, true);
 
@@ -160,7 +172,6 @@ public class MainActivity extends AppCompatActivity {
 
         }
 
-
         @Override
         public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
             super.onCharacteristicRead(gatt, characteristic, status);
@@ -183,9 +194,8 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
             super.onCharacteristicChanged(gatt, characteristic);
-
+            mTvTemperature.setText(characteristic.getStringValue(0));
             Log.d(TAG, "GATT CALLBACK : onCharacteristicChanged" + characteristic.getStringValue(0));
-
         }
 
     };
