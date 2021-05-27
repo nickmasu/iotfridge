@@ -10,10 +10,12 @@ import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
 import android.content.Intent;
+import android.os.Handler;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -33,6 +35,7 @@ public class MainActivity extends AppCompatActivity {
     private BluetoothAdapter mBluetoothAdapter;
     private TextView mTvDeviceInfo;
     private TextView mTvTemperature;
+    private Handler mHandler;
 
 
     @Override
@@ -41,6 +44,8 @@ public class MainActivity extends AppCompatActivity {
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        mHandler = new Handler(); // Initialize the Handler from the Main Thread
 
         mTvDeviceInfo = (TextView) findViewById(R.id.tvDeviceInfo);
         mTvTemperature = (TextView) findViewById(R.id.tvTemperature);
@@ -78,6 +83,21 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    public void updateDevice(String text) {
+        mHandler.post(new Runnable() {
+            public void run() {
+                mTvDeviceInfo.setText(text);
+            }
+        });
+    }
+
+    public void updateTemperature(String text) {
+        mHandler.post(new Runnable() {
+            public void run() {
+                mTvTemperature.setText(text);
+            }
+        });
+    }
 
     public void connect() {
         //connect to the given deviceaddress
@@ -100,11 +120,11 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
             if (status == BluetoothGatt.GATT_SUCCESS && newState == BluetoothProfile.STATE_CONNECTED) {
-                mTvDeviceInfo.setText("Device Connected");
+                updateDevice("Device Connected");
                 Log.i(TAG, "Connected to GATT server.");
                 gatt.discoverServices();
             } else {
-                mTvDeviceInfo.setText("Device NOT Connected");
+                updateDevice("Device NOT Connected");
                 Log.i(TAG, "Disconnected from GATT server.");
             }
         }
@@ -114,7 +134,7 @@ public class MainActivity extends AppCompatActivity {
             Log.d(TAG, "GATT CALLBACK : onServicesDiscovered");
 
             if (status != BluetoothGatt.GATT_SUCCESS) {
-                mTvDeviceInfo.setText("ERROR discovering services");
+                updateDevice("ERROR discovering services");
                 Log.w(TAG, "ERROR onServicesDiscovered received: " + status);
                 return;
             }
@@ -134,21 +154,21 @@ public class MainActivity extends AppCompatActivity {
             BluetoothGattDescriptor desc = rx.getDescriptor(CLIENT_UUID);
             if (desc == null) {
                 // Stop if the RX characteristic has no client descriptor.
-                mTvDeviceInfo.setText("ERROR descriptor not found");
+                updateDevice("ERROR descriptor not found");
                 Log.d(TAG, "ERROR 2: desc");
                 return;
             }
             desc.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
             if (!gatt.writeDescriptor(desc)) {
                 // Stop if the client descriptor could not be written.
-                mTvDeviceInfo.setText("ERROR writting descriptor");
+                updateDevice("ERROR writting descriptor");
                 Log.d(TAG, "ERROR 3: writeDescriptor");
                 return;
             }
 
 
             // Notify of connection completion.
-            mTvDeviceInfo.setText("Connected to UART service");
+            updateDevice("Connected to UART service");
             Log.d(TAG, "SUCCESS??");
             gatt.setCharacteristicNotification(rx, true);
 
@@ -194,7 +214,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
             super.onCharacteristicChanged(gatt, characteristic);
-            mTvTemperature.setText(characteristic.getStringValue(0));
+            updateTemperature(characteristic.getStringValue(0));
             Log.d(TAG, "GATT CALLBACK : onCharacteristicChanged" + characteristic.getStringValue(0));
         }
 
