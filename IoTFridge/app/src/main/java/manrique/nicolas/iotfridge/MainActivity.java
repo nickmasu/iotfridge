@@ -1,4 +1,4 @@
-package com.example.iotfridge;
+package manrique.nicolas.iotfridge;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -15,6 +15,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.TextView;
+
+import manrique.nicolas.iotfridge.R;
 
 import java.util.Set;
 import java.util.UUID;

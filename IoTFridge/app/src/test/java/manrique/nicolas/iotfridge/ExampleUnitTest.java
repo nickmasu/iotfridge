@@ -1,4 +1,4 @@
-package com.example.iotfridge;
+package manrique.nicolas.iotfridge;
 
 import org.junit.Test;
 
