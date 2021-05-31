@@ -38,8 +38,8 @@ public class TemperatureService extends Service implements TemperatureGattCallba
                 .build();
         startForeground(1, notification);
         //do heavy work on a background thread
-        
-        connect(input);
+
+        connectMockup(input);
 
         //stopSelf();
         return START_NOT_STICKY;
@@ -55,8 +55,38 @@ public class TemperatureService extends Service implements TemperatureGattCallba
             );
             NotificationManager manager = getSystemService(NotificationManager.class);
             manager.createNotificationChannel(serviceChannel);
-            manager.getNotificationChannel(CHANNEL_ID).setImportance(NotificationManager.IMPORTANCE_HIGH);
+            manager.getNotificationChannel(CHANNEL_ID).setImportance(NotificationManager.IMPORTANCE_LOW);
         }
+    }
+
+    private void connectMockup(String deviceAdress) {
+        Log.i(TAG, "In onStartCommand");
+        new Thread(new Runnable() {
+            public void run() {
+                try {
+                    Thread.sleep(5000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                Intent broadcastIntent = new Intent();
+                broadcastIntent.setAction(MainActivity.mBroadcastStringAction);
+                broadcastIntent.putExtra("Data", "Broadcast Data");
+                sendBroadcast(broadcastIntent);
+                try {
+                    Thread.sleep(5000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                broadcastIntent.setAction(MainActivity.mBroadcastIntegerAction);
+                broadcastIntent.putExtra("Data", 10);
+                sendBroadcast(broadcastIntent);
+                try {
+                    Thread.sleep(5000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
     }
 
     private void connect(String deviceAdress) {
@@ -77,12 +107,18 @@ public class TemperatureService extends Service implements TemperatureGattCallba
     @Override
     public void onDeviceStateChanged(String state) {
         Log.i(TAG, "onDeviceStateChanged " + state);
-
+        Intent broadcastIntent = new Intent();
+        broadcastIntent.setAction(MainActivity.mBroadcastStringAction);
+        broadcastIntent.putExtra("Data", "Broadcast Data");
+        sendBroadcast(broadcastIntent);
     }
 
     @Override
     public void onTemperatureChanged(float temperature) {
         Log.i(TAG, "onTemperatureChanged " + temperature);
-
+        Intent broadcastIntent = new Intent();
+        broadcastIntent.setAction(MainActivity.mBroadcastIntegerAction);
+        broadcastIntent.putExtra("Data", temperature);
+        sendBroadcast(broadcastIntent);
     }
 }

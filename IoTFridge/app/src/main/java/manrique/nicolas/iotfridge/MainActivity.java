@@ -10,7 +10,10 @@ import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothProfile;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Handler;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -27,6 +30,9 @@ import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity implements TemperatureGattCallback.DeviceInfoCallback {
 
+    public static final String mBroadcastStringAction = "com.truiton.broadcast.string";
+    public static final String mBroadcastIntegerAction = "com.truiton.broadcast.integer";
+    public static final String mBroadcastArrayListAction = "com.truiton.broadcast.arraylist";
 
     private BluetoothDevice mDevice;
     private String TAG = "MainActivity";
@@ -36,12 +42,18 @@ public class MainActivity extends AppCompatActivity implements TemperatureGattCa
     private TextView mTvDeviceInfo;
     private TextView mTvTemperature;
     private Handler mHandler;
+    private IntentFilter mIntentFilter;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        mIntentFilter = new IntentFilter();
+        mIntentFilter.addAction(mBroadcastStringAction);
+        mIntentFilter.addAction(mBroadcastIntegerAction);
+        mIntentFilter.addAction(mBroadcastArrayListAction);
 
         mHandler = new Handler(); // Initialize the Handler from the Main Thread
 
@@ -55,8 +67,8 @@ public class MainActivity extends AppCompatActivity implements TemperatureGattCa
         } else {
             mTvDeviceInfo.setText("Device \'" + DEVICE_NAME + "\' Found)");
             Log.d(TAG, "DEVICE FOUND : " + mDevice.getName());
-            startService();
         }
+        startService();
 
     }
 
@@ -85,13 +97,46 @@ public class MainActivity extends AppCompatActivity implements TemperatureGattCa
 
     public void startService() {
         Intent serviceIntent = new Intent(this, TemperatureService.class);
-        serviceIntent.putExtra("inputExtra", mDevice.getAddress());
+        String adress = "Hola";
+        if (mDevice != null) {
+            adress = mDevice.getAddress();
+        }
+        serviceIntent.putExtra("inputExtra", adress);
         ContextCompat.startForegroundService(this, serviceIntent);
     }
 
     public void stopService() {
         Intent serviceIntent = new Intent(this, TemperatureService.class);
         stopService(serviceIntent);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        registerReceiver(mReceiver, mIntentFilter);
+    }
+
+    private BroadcastReceiver mReceiver = new BroadcastReceiver() {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            mTvDeviceInfo.setText("Broadcast From Service: \n");
+            if (intent.getAction().equals(mBroadcastStringAction)) {
+                mTvDeviceInfo.setText(intent.getStringExtra("Data") + "\n\n");
+            } else if (intent.getAction().equals(mBroadcastIntegerAction)) {
+                mTvDeviceInfo.setText(intent.getIntExtra("Data", 0) + "\n\n");
+            
+                Intent stopIntent = new Intent(MainActivity.this,
+                        TemperatureService.class);
+                stopService(stopIntent);
+            }
+        }
+    };
+
+    @Override
+    protected void onPause() {
+        unregisterReceiver(mReceiver);
+        super.onPause();
     }
 
 
