@@ -1,5 +1,7 @@
 package manrique.nicolas.iotfridge;
 
+import android.app.Notification;
+import android.app.PendingIntent;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
@@ -12,6 +14,8 @@ import android.content.Intent;
 import android.os.Handler;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
+
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.TextView;
@@ -36,10 +40,11 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-
-
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        startService();
+
 
         mHandler = new Handler(); // Initialize the Handler from the Main Thread
 
@@ -77,6 +82,18 @@ public class MainActivity extends AppCompatActivity {
             connect();
         }
 
+    }
+
+
+    public void startService() {
+        Intent serviceIntent = new Intent(this, TemperatureService.class);
+        serviceIntent.putExtra("inputExtra", "Foreground Service Example in Android");
+        ContextCompat.startForegroundService(this, serviceIntent);
+    }
+
+    public void stopService() {
+        Intent serviceIntent = new Intent(this, TemperatureService.class);
+        stopService(serviceIntent);
     }
 
     public void updateDevice(String text) {
