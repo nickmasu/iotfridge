@@ -5,17 +5,22 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothGattCallback;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
+import android.util.Log;
 
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 
-public class TemperatureService extends Service {
+public class TemperatureService extends Service implements TemperatureGattCallback.DeviceInfoCallback {
 
     public static final String CHANNEL_ID = "ForegroundServiceChannel";
+    private static final String TAG = "TemperatureService";
 
 
     @Override
@@ -33,9 +38,13 @@ public class TemperatureService extends Service {
                 .build();
         startForeground(1, notification);
         //do heavy work on a background thread
+        
+        connect(input);
+
         //stopSelf();
         return START_NOT_STICKY;
     }
+
 
     private void createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -50,6 +59,14 @@ public class TemperatureService extends Service {
         }
     }
 
+    private void connect(String deviceAdress) {
+        BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        BluetoothDevice device = bluetoothAdapter.getRemoteDevice(deviceAdress);
+        //connect to the device found
+        BluetoothGattCallback mGattCallback = new TemperatureGattCallback(this);
+        device.connectGatt(this, false, mGattCallback);
+    }
+
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
@@ -57,4 +74,15 @@ public class TemperatureService extends Service {
     }
 
 
+    @Override
+    public void onDeviceStateChanged(String state) {
+        Log.i(TAG, "onDeviceStateChanged " + state);
+
+    }
+
+    @Override
+    public void onTemperatureChanged(float temperature) {
+        Log.i(TAG, "onTemperatureChanged " + temperature);
+
+    }
 }
