@@ -17,34 +17,21 @@ import android.util.Log;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 
+import java.util.Random;
+
 public class TemperatureService extends Service implements TemperatureGattCallback.DeviceInfoCallback {
 
     public static final String CHANNEL_ID = "ForegroundServiceChannel";
+
     private static final String TAG = "TemperatureService";
 
 
     @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        String input = intent.getStringExtra("inputExtra");
+    public void onCreate() {
+        super.onCreate();
         createNotificationChannel();
-        Intent notificationIntent = new Intent(this, MainActivity.class);
-        PendingIntent pendingIntent = PendingIntent.getActivity(this,
-                0, notificationIntent, 0);
-        Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
-                .setContentTitle("Foreground Service")
-                .setContentText(input)
-                .setSmallIcon(R.drawable.ic_launcher_background)
-                .setContentIntent(pendingIntent)
-                .build();
-        startForeground(1, notification);
-        //do heavy work on a background thread
 
-        connectMockup(input);
-
-        //stopSelf();
-        return START_NOT_STICKY;
     }
-
 
     private void createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -55,33 +42,45 @@ public class TemperatureService extends Service implements TemperatureGattCallba
             );
             NotificationManager manager = getSystemService(NotificationManager.class);
             manager.createNotificationChannel(serviceChannel);
-            manager.getNotificationChannel(CHANNEL_ID).setImportance(NotificationManager.IMPORTANCE_LOW);
         }
     }
+
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        String deviceAddress = intent.getStringExtra("deviceAddress");
+
+
+        Intent notificationIntent = new Intent(this, MainActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this,
+                0, notificationIntent, 0);
+        Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
+                .setContentTitle("Foreground Service")
+                .setContentText(deviceAddress)
+                .setSmallIcon(R.drawable.ic_launcher_background)
+                .setContentIntent(pendingIntent)
+                .build();
+        startForeground(1, notification);
+        //do heavy work on a background thread
+
+        connectMockup(deviceAddress);
+
+
+        //stopSelf();
+        return START_NOT_STICKY;
+    }
+
 
     private void connectMockup(String deviceAdress) {
         Log.i(TAG, "In onStartCommand");
         new Thread(new Runnable() {
             public void run() {
                 try {
-                    Thread.sleep(5000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                Intent broadcastIntent = new Intent();
-                broadcastIntent.setAction(MainActivity.mBroadcastStringAction);
-                broadcastIntent.putExtra("Data", "Broadcast Data");
-                sendBroadcast(broadcastIntent);
-                try {
-                    Thread.sleep(5000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                broadcastIntent.setAction(MainActivity.mBroadcastIntegerAction);
-                broadcastIntent.putExtra("Data", 10);
-                sendBroadcast(broadcastIntent);
-                try {
-                    Thread.sleep(5000);
+                    Random rand = new Random();
+                    while (true) {
+                        Thread.sleep(5000);
+                        onTemperatureChanged(rand.nextFloat() * 40);
+                    }
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -89,9 +88,9 @@ public class TemperatureService extends Service implements TemperatureGattCallba
         }).start();
     }
 
-    private void connect(String deviceAdress) {
+    private void connect(String deviceAddress) {
         BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-        BluetoothDevice device = bluetoothAdapter.getRemoteDevice(deviceAdress);
+        BluetoothDevice device = bluetoothAdapter.getRemoteDevice(deviceAddress);
         //connect to the device found
         BluetoothGattCallback mGattCallback = new TemperatureGattCallback(this);
         device.connectGatt(this, false, mGattCallback);
@@ -105,11 +104,20 @@ public class TemperatureService extends Service implements TemperatureGattCallba
 
 
     @Override
-    public void onDeviceStateChanged(String state) {
-        Log.i(TAG, "onDeviceStateChanged " + state);
+    public void onConnectionSuccessful() {
+        Log.i(TAG, "onConnectionSuccessful ");
         Intent broadcastIntent = new Intent();
         broadcastIntent.setAction(MainActivity.mBroadcastStringAction);
-        broadcastIntent.putExtra("Data", "Broadcast Data");
+        broadcastIntent.putExtra("connectionMessage", "Connected Successful");
+        sendBroadcast(broadcastIntent);
+    }
+
+    @Override
+    public void onConnectionError(String error) {
+        Log.i(TAG, "onConnectionError " + error);
+        Intent broadcastIntent = new Intent();
+        broadcastIntent.setAction(MainActivity.mBroadcastStringAction);
+        broadcastIntent.putExtra("connectionMessage", error);
         sendBroadcast(broadcastIntent);
     }
 
@@ -118,7 +126,7 @@ public class TemperatureService extends Service implements TemperatureGattCallba
         Log.i(TAG, "onTemperatureChanged " + temperature);
         Intent broadcastIntent = new Intent();
         broadcastIntent.setAction(MainActivity.mBroadcastIntegerAction);
-        broadcastIntent.putExtra("Data", temperature);
+        broadcastIntent.putExtra("temperature", temperature);
         sendBroadcast(broadcastIntent);
     }
 }

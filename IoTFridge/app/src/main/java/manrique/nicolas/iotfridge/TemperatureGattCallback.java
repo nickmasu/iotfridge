@@ -14,7 +14,10 @@ public class TemperatureGattCallback extends BluetoothGattCallback {
 
 
     public interface DeviceInfoCallback {
-        void onDeviceStateChanged(String state);
+
+        void onConnectionSuccessful();
+
+        void onConnectionError(String error);
 
         void onTemperatureChanged(float temperature);
     }
@@ -39,19 +42,18 @@ public class TemperatureGattCallback extends BluetoothGattCallback {
     @Override
     public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
         if (status == BluetoothGatt.GATT_SUCCESS && newState == BluetoothProfile.STATE_CONNECTED) {
-            mDeviceInfoCallback.onDeviceStateChanged("Device connected");
             Log.i(TAG, "Device connected");
             gatt.discoverServices();
         } else {
-            mDeviceInfoCallback.onDeviceStateChanged("Device NOT connected");
-            Log.i(TAG, "Device NOT connected");
+            mDeviceInfoCallback.onConnectionError("Device NOT connected");
+            Log.i(TAG, "ERROR Device NOT connected");
         }
     }
 
     @Override
     public void onServicesDiscovered(BluetoothGatt gatt, int status) {
         if (status != BluetoothGatt.GATT_SUCCESS) {
-            mDeviceInfoCallback.onDeviceStateChanged("ERROR discovering services");
+            mDeviceInfoCallback.onConnectionError("ERROR discovering services");
             Log.w(TAG, "ERROR onServicesDiscovered received: " + status);
             return;
         }
@@ -65,7 +67,7 @@ public class TemperatureGattCallback extends BluetoothGattCallback {
         BluetoothGattDescriptor desc = rx.getDescriptor(CLIENT_UUID);
         if (desc == null) {
             // Stop if the RX characteristic has no client descriptor.
-            mDeviceInfoCallback.onDeviceStateChanged("ERROR descriptor not found");
+            mDeviceInfoCallback.onConnectionError("ERROR descriptor not found");
             Log.d(TAG, "ERROR descriptor not found");
             return;
         }
@@ -73,15 +75,14 @@ public class TemperatureGattCallback extends BluetoothGattCallback {
         desc.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
         if (!gatt.writeDescriptor(desc)) {
             // Stop if the client descriptor could not be written.
-            mDeviceInfoCallback.onDeviceStateChanged("ERROR writting descriptor");
+            mDeviceInfoCallback.onConnectionError("ERROR writting descriptor");
             Log.d(TAG, "ERROR writting descriptor");
             return;
         }
 
-
         // Notify of connection completion.
+        mDeviceInfoCallback.onConnectionSuccessful();
         gatt.setCharacteristicNotification(rx, true);
-        mDeviceInfoCallback.onDeviceStateChanged("Connected to UART service");
         Log.d(TAG, "Connected to UART service");
     }
 

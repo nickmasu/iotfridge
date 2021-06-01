@@ -28,7 +28,7 @@ import manrique.nicolas.iotfridge.R;
 import java.util.Set;
 import java.util.UUID;
 
-public class MainActivity extends AppCompatActivity implements TemperatureGattCallback.DeviceInfoCallback {
+public class MainActivity extends AppCompatActivity {
 
     public static final String mBroadcastStringAction = "com.truiton.broadcast.string";
     public static final String mBroadcastIntegerAction = "com.truiton.broadcast.integer";
@@ -120,15 +120,12 @@ public class MainActivity extends AppCompatActivity implements TemperatureGattCa
 
         @Override
         public void onReceive(Context context, Intent intent) {
-            mTvDeviceInfo.setText("Broadcast From Service: \n");
             if (intent.getAction().equals(mBroadcastStringAction)) {
-                mTvDeviceInfo.setText(intent.getStringExtra("Data") + "\n\n");
+                mTvDeviceInfo.setText(intent.getStringExtra("connectionMessage") + "\n\n");
             } else if (intent.getAction().equals(mBroadcastIntegerAction)) {
-                mTvDeviceInfo.setText(intent.getIntExtra("Data", 0) + "\n\n");
-            
-                Intent stopIntent = new Intent(MainActivity.this,
-                        TemperatureService.class);
-                stopService(stopIntent);
+                mTvTemperature.setText(intent.getFloatExtra("temperature", 0) + "\n\n");
+                //Intent stopIntent = new Intent(MainActivity.this, TemperatureService.class);
+                // stopService(stopIntent);
             }
         }
     };
@@ -139,22 +136,4 @@ public class MainActivity extends AppCompatActivity implements TemperatureGattCa
         super.onPause();
     }
 
-
-    @Override
-    public void onDeviceStateChanged(String state) {
-        mHandler.post(new Runnable() {
-            public void run() {
-                mTvDeviceInfo.setText(state);
-            }
-        });
-    }
-
-    @Override
-    public void onTemperatureChanged(float temperature) {
-        mHandler.post(new Runnable() {
-            public void run() {
-                mTvTemperature.setText(String.valueOf(temperature));
-            }
-        });
-    }
 }
