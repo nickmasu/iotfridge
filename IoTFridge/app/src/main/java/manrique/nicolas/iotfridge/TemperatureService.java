@@ -8,6 +8,7 @@ import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGattCallback;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Handler;
@@ -22,8 +23,10 @@ import java.util.Random;
 public class TemperatureService extends Service implements TemperatureGattCallback.DeviceInfoCallback {
 
     public static final String CHANNEL_ID = "ForegroundServiceChannel";
+    public static final String IMPORTANT_CHANNEL_ID = "ImportantForegroundServiceChannel";
 
     private static final String TAG = "TemperatureService";
+    private NotificationCompat.Builder mBuilder;
 
 
     @Override
@@ -42,6 +45,13 @@ public class TemperatureService extends Service implements TemperatureGattCallba
             );
             NotificationManager manager = getSystemService(NotificationManager.class);
             manager.createNotificationChannel(serviceChannel);
+
+            NotificationChannel serviceChannel2 = new NotificationChannel(
+                    IMPORTANT_CHANNEL_ID,
+                    "Important Foreground Service Channel",
+                    NotificationManager.IMPORTANCE_HIGH
+            );
+            manager.createNotificationChannel(serviceChannel2);
         }
     }
 
@@ -60,6 +70,7 @@ public class TemperatureService extends Service implements TemperatureGattCallba
                 .setSmallIcon(R.drawable.ic_launcher_background)
                 .setContentIntent(pendingIntent)
                 .build();
+
         startForeground(1, notification);
         //do heavy work on a background thread
 
@@ -70,6 +81,27 @@ public class TemperatureService extends Service implements TemperatureGattCallba
         return START_NOT_STICKY;
     }
 
+    public void refreshNotifications(float temperature) {
+        if (mBuilder == null) {
+            mBuilder = new NotificationCompat.Builder(this, CHANNEL_ID);
+            mBuilder.setAutoCancel(false);
+            mBuilder.setOngoing(true);
+            mBuilder.setOnlyAlertOnce(true);
+            mBuilder.setVisibility(NotificationCompat.VISIBILITY_PRIVATE);
+            mBuilder.setSmallIcon(R.drawable.ic_launcher_background);
+            mBuilder.setOngoing(true);
+            mBuilder.setContentTitle("Title");
+        }
+
+        mBuilder.setContentText("Temperature :" + temperature + " Cº");
+
+
+        NotificationManager mNotificationManager =
+                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        // Sets an ID for the notification, so it can be updated
+        int notifyID = 1;
+        mNotificationManager.notify(notifyID, mBuilder.build());
+    }
 
     private void connectMockup(String deviceAdress) {
         Log.i(TAG, "In onStartCommand");
@@ -123,10 +155,29 @@ public class TemperatureService extends Service implements TemperatureGattCallba
 
     @Override
     public void onTemperatureChanged(float temperature) {
+        if (temperature < 10) {
+            Notification notification = new NotificationCompat.Builder(this, IMPORTANT_CHANNEL_ID)
+                    .setContentTitle("Foreground Service")
+                    .setContentText("CADENA DE FRIO ROTA")
+                    .setSmallIcon(R.drawable.ic_launcher_background)
+                    .build();
+
+
+            NotificationManager mNotificationManager =
+                    (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            // Sets an ID for the notification, so it can be updated
+            int notifyID = 2;
+            mNotificationManager.notify(notifyID, notification);
+        }
+
+
+        refreshNotifications(temperature);
         Log.i(TAG, "onTemperatureChanged " + temperature);
         Intent broadcastIntent = new Intent();
         broadcastIntent.setAction(MainActivity.mBroadcastIntegerAction);
         broadcastIntent.putExtra("temperature", temperature);
         sendBroadcast(broadcastIntent);
     }
+
+
 }
