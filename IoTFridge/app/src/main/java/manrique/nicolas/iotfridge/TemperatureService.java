@@ -16,12 +16,16 @@ import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 
 import java.util.Random;
+import java.util.Set;
 
 public class TemperatureService extends Service implements TemperatureGattCallback.Listener {
 
     public static boolean isRunning = false;
     public static final String STATE_CHANNEL_ID = "StateChannelId";
     public static final String WARNING_CHANNEL_ID = "WarningChannelId";
+
+    public static final String ACTION_CONNECTION_STATUS = "manrique.nicolas.action.connection";
+    public static final String ACTION_TEMPERATURE = "manrique.nicolas.action.temperature";
 
     private static final String TAG = "TemperatureService";
     private NotificationManager mNotificationManager;
@@ -99,7 +103,7 @@ public class TemperatureService extends Service implements TemperatureGattCallba
     }
 
 
-    private void connectMockup(String deviceAdress) {
+    private void connectMockup(String deviceAddress) {
         Log.i(TAG, "In onStartCommand");
         new Thread(new Runnable() {
             public void run() {
@@ -120,10 +124,16 @@ public class TemperatureService extends Service implements TemperatureGattCallba
 
     private void connect(String deviceAddress) {
         BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-        BluetoothDevice device = bluetoothAdapter.getRemoteDevice(deviceAddress);
-        //connect to the device found
-        BluetoothGattCallback mGattCallback = new TemperatureGattCallback(this);
-        device.connectGatt(this, false, mGattCallback);
+        Set<BluetoothDevice> pairedDevices = bluetoothAdapter.getBondedDevices();
+        for (BluetoothDevice device : pairedDevices) {
+            if (device.getAddress().equals(deviceAddress)) {
+                //connect to the device found
+                BluetoothGattCallback mGattCallback = new TemperatureGattCallback(this);
+                device.connectGatt(this, false, mGattCallback);
+                return;
+            }
+        }
+        broadcastActionConnection(false, "Invalid Address");
     }
 
     @Nullable
@@ -142,18 +152,20 @@ public class TemperatureService extends Service implements TemperatureGattCallba
     @Override
     public void onConnectionSuccessful() {
         Log.i(TAG, "onConnectionSuccessful ");
-        Intent broadcastIntent = new Intent();
-        broadcastIntent.setAction(MainActivity.mBroadcastStringAction);
-        broadcastIntent.putExtra("connectionMessage", "Connected Successful");
-        sendBroadcast(broadcastIntent);
+        broadcastActionConnection(false, "Device connected");
     }
 
     @Override
     public void onConnectionError(String error) {
         Log.i(TAG, "onConnectionError " + error);
+        broadcastActionConnection(false, error);
+    }
+
+    private void broadcastActionConnection(boolean connected, String message) {
         Intent broadcastIntent = new Intent();
-        broadcastIntent.setAction(MainActivity.mBroadcastStringAction);
-        broadcastIntent.putExtra("connectionMessage", error);
+        broadcastIntent.setAction(ACTION_CONNECTION_STATUS);
+        broadcastIntent.putExtra("connected", connected);
+        broadcastIntent.putExtra("message", message);
         sendBroadcast(broadcastIntent);
     }
 
@@ -164,11 +176,13 @@ public class TemperatureService extends Service implements TemperatureGattCallba
             notifyWarningTemperature(temperature);
         }
         notifyStateTemperature(temperature);
+        broadcastActionTemperature(temperature);
+    }
+
+    private void broadcastActionTemperature(float temperature) {
         Intent broadcastIntent = new Intent();
-        broadcastIntent.setAction(MainActivity.mBroadcastIntegerAction);
+        broadcastIntent.setAction(ACTION_TEMPERATURE);
         broadcastIntent.putExtra("temperature", temperature);
         sendBroadcast(broadcastIntent);
     }
-
-
 }

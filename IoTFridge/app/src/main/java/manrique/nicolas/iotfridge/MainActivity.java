@@ -32,9 +32,6 @@ import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
 
-    public static final String mBroadcastStringAction = "com.truiton.broadcast.string";
-    public static final String mBroadcastIntegerAction = "com.truiton.broadcast.integer";
-    public static final String mBroadcastArrayListAction = "com.truiton.broadcast.arraylist";
 
     private BluetoothDevice mDevice;
     private String TAG = "MainActivity";
@@ -54,9 +51,8 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         mIntentFilter = new IntentFilter();
-        mIntentFilter.addAction(mBroadcastStringAction);
-        mIntentFilter.addAction(mBroadcastIntegerAction);
-        mIntentFilter.addAction(mBroadcastArrayListAction);
+        mIntentFilter.addAction(TemperatureService.ACTION_CONNECTION_STATUS);
+        mIntentFilter.addAction(TemperatureService.ACTION_TEMPERATURE);
 
         mHandler = new Handler(); // Initialize the Handler from the Main Thread
 
@@ -75,7 +71,7 @@ public class MainActivity extends AppCompatActivity {
 
         mDevice = finDevice();
         mScConnection.setChecked(TemperatureService.isRunning);
-        // mScConnection.setEnabled(mDevice != null); // allowed using a real device
+        mScConnection.setEnabled(mDevice != null); // allowed using a real device
 
         if (mDevice == null) {
             mTvDeviceInfo.setText("Device \'" + DEVICE_NAME + "\' Not Found");
@@ -123,6 +119,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void stopService() {
+        if (!TemperatureService.isRunning)
+            return;
         Intent serviceIntent = new Intent(this, TemperatureService.class);
         stopService(serviceIntent);
     }
@@ -138,13 +136,15 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onReceive(Context context, Intent intent) {
             mScConnection.setEnabled(true);
-
-            if (intent.getAction().equals(mBroadcastStringAction)) {
-                mTvDeviceInfo.setText(intent.getStringExtra("connectionMessage") + "\n\n");
-            } else if (intent.getAction().equals(mBroadcastIntegerAction)) {
+            if (intent.getAction().equals(TemperatureService.ACTION_CONNECTION_STATUS)) {
+                mTvDeviceInfo.setText(intent.getStringExtra("message") + "\n\n");
+                if (!intent.getBooleanExtra("connected", false)) {
+                    stopService();
+                    mScConnection.setChecked(false);
+                }
+            } else if (intent.getAction().equals(TemperatureService.ACTION_TEMPERATURE)) {
                 mTvTemperature.setText(intent.getFloatExtra("temperature", 0) + "\n\n");
-                //Intent stopIntent = new Intent(MainActivity.this, TemperatureService.class);
-                // stopService(stopIntent);
+
             }
         }
     };
