@@ -17,10 +17,12 @@ import android.content.IntentFilter;
 import android.os.Handler;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SwitchCompat;
 import androidx.core.content.ContextCompat;
 
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.CompoundButton;
 import android.widget.TextView;
 
 import manrique.nicolas.iotfridge.R;
@@ -41,6 +43,7 @@ public class MainActivity extends AppCompatActivity {
     private BluetoothAdapter mBluetoothAdapter;
     private TextView mTvDeviceInfo;
     private TextView mTvTemperature;
+    private SwitchCompat mScConnection;
     private Handler mHandler;
     private IntentFilter mIntentFilter;
 
@@ -59,8 +62,20 @@ public class MainActivity extends AppCompatActivity {
 
         mTvDeviceInfo = (TextView) findViewById(R.id.tvDeviceInfo);
         mTvTemperature = (TextView) findViewById(R.id.tvTemperature);
+        mScConnection = (SwitchCompat) findViewById(R.id.scConnection);
+
+        mScConnection.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked)
+                    startService();
+                else
+                    stopService();
+            }
+        });
 
         mDevice = finDevice();
+        // mScConnection.setEnabled(mDevice != null); // allowed using a real device
+
         if (mDevice == null) {
             mTvDeviceInfo.setText("Device \'" + DEVICE_NAME + "\' Not Found");
             Log.d(TAG, "DEVICE NOT FOUND");
@@ -68,8 +83,6 @@ public class MainActivity extends AppCompatActivity {
             mTvDeviceInfo.setText("Device \'" + DEVICE_NAME + "\' Found)");
             Log.d(TAG, "DEVICE FOUND : " + mDevice.getName());
         }
-        startService();
-
     }
 
     private BluetoothDevice finDevice() {
@@ -96,6 +109,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void startService() {
+        mScConnection.setEnabled(false);
         Intent serviceIntent = new Intent(this, TemperatureService.class);
         String adress = "Hola";
         if (mDevice != null) {
@@ -120,6 +134,8 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onReceive(Context context, Intent intent) {
+            mScConnection.setEnabled(true);
+
             if (intent.getAction().equals(mBroadcastStringAction)) {
                 mTvDeviceInfo.setText(intent.getStringExtra("connectionMessage") + "\n\n");
             } else if (intent.getAction().equals(mBroadcastIntegerAction)) {

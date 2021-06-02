@@ -27,6 +27,7 @@ public class TemperatureService extends Service implements TemperatureGattCallba
 
     private static final String TAG = "TemperatureService";
     private NotificationCompat.Builder mBuilder;
+    private boolean stopService;
 
 
     @Override
@@ -73,10 +74,7 @@ public class TemperatureService extends Service implements TemperatureGattCallba
 
         startForeground(1, notification);
         //do heavy work on a background thread
-
         connectMockup(deviceAddress);
-
-
         //stopSelf();
         return START_NOT_STICKY;
     }
@@ -104,18 +102,22 @@ public class TemperatureService extends Service implements TemperatureGattCallba
     }
 
     private void connectMockup(String deviceAdress) {
+        stopService = false;
         Log.i(TAG, "In onStartCommand");
         new Thread(new Runnable() {
             public void run() {
                 try {
                     Random rand = new Random();
-                    while (true) {
-                        Thread.sleep(5000);
+                    while (!stopService) {
                         onTemperatureChanged(rand.nextFloat() * 40);
+
+                        Thread.sleep(5000);
                     }
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
+                Log.i(TAG, "Thread STOPPED");
+
             }
         }).start();
     }
@@ -134,6 +136,12 @@ public class TemperatureService extends Service implements TemperatureGattCallba
         return null;
     }
 
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        Log.i(TAG, "onDestroy");
+        stopService = true;
+    }
 
     @Override
     public void onConnectionSuccessful() {
