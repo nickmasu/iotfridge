@@ -74,6 +74,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         mDevice = finDevice();
+        mScConnection.setChecked(TemperatureService.isRunning);
         // mScConnection.setEnabled(mDevice != null); // allowed using a real device
 
         if (mDevice == null) {
@@ -109,6 +110,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void startService() {
+        if (TemperatureService.isRunning)
+            return;
         mScConnection.setEnabled(false);
         Intent serviceIntent = new Intent(this, TemperatureService.class);
         String adress = "Hola";

@@ -20,97 +20,95 @@ import androidx.core.app.NotificationCompat;
 
 import java.util.Random;
 
-public class TemperatureService extends Service implements TemperatureGattCallback.DeviceInfoCallback {
+public class TemperatureService extends Service implements TemperatureGattCallback.Listener {
 
-    public static final String CHANNEL_ID = "ForegroundServiceChannel";
-    public static final String IMPORTANT_CHANNEL_ID = "ImportantForegroundServiceChannel";
+    public static boolean isRunning = false;
+    public static final String STATE_CHANNEL_ID = "StateChannelId";
+    public static final String WARNING_CHANNEL_ID = "WarningChannelId";
 
     private static final String TAG = "TemperatureService";
-    private NotificationCompat.Builder mBuilder;
-    private boolean stopService;
-
+    private NotificationManager mNotificationManager;
+    private NotificationCompat.Builder mNotyStateBuilder;
+    private NotificationCompat.Builder mNotyWarningBuilder;
 
     @Override
     public void onCreate() {
         super.onCreate();
         createNotificationChannel();
-
     }
 
     private void createNotificationChannel() {
+        mNotificationManager = getSystemService(NotificationManager.class);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel serviceChannel = new NotificationChannel(
-                    CHANNEL_ID,
-                    "Foreground Service Channel",
-                    NotificationManager.IMPORTANCE_DEFAULT
-            );
-            NotificationManager manager = getSystemService(NotificationManager.class);
-            manager.createNotificationChannel(serviceChannel);
+            mNotificationManager.createNotificationChannel(new NotificationChannel(
+                    STATE_CHANNEL_ID,
+                    "State Service Channel",
+                    NotificationManager.IMPORTANCE_LOW
+            ));
 
-            NotificationChannel serviceChannel2 = new NotificationChannel(
-                    IMPORTANT_CHANNEL_ID,
-                    "Important Foreground Service Channel",
+            mNotificationManager.createNotificationChannel(new NotificationChannel(
+                    WARNING_CHANNEL_ID,
+                    "Warning Service Channel",
                     NotificationManager.IMPORTANCE_HIGH
-            );
-            manager.createNotificationChannel(serviceChannel2);
+            ));
         }
     }
 
+
+    private void notifyStateTemperature(float temperature) {
+        if (mNotyStateBuilder == null) {
+            mNotyStateBuilder = new NotificationCompat.Builder(this, WARNING_CHANNEL_ID);
+            mNotyStateBuilder
+                    .setAutoCancel(false)
+                    .setOngoing(true)
+                    .setOnlyAlertOnce(true)
+                    .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
+                    .setSmallIcon(R.drawable.ic_launcher_background)
+                    .setOngoing(true)
+                    .setContentTitle("Title");
+        }
+        mNotyStateBuilder.setContentText("Temperature : " + String.valueOf(temperature) + " Cº");
+        // Sets an ID for the notification, so it can be updated
+        final int notifyID = 1;
+        mNotificationManager.notify(notifyID, mNotyStateBuilder.build());
+    }
+
+    private void notifyWarningTemperature(float temperature) {
+        if (mNotyWarningBuilder == null) {
+            mNotyWarningBuilder = new NotificationCompat.Builder(this, WARNING_CHANNEL_ID);
+            mNotyWarningBuilder
+                    .setSmallIcon(R.drawable.ic_launcher_background)
+                    .setContentTitle("Warning");
+        }
+        mNotyWarningBuilder.setContentText("Temperature Broken : " + String.valueOf(temperature) + " Cº");
+        // Sets an ID for the notification, so it can be updated
+        final int notifyID = 2;
+        mNotificationManager.notify(notifyID, mNotyWarningBuilder.build());
+    }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         String deviceAddress = intent.getStringExtra("deviceAddress");
-
-
-        Intent notificationIntent = new Intent(this, MainActivity.class);
-        PendingIntent pendingIntent = PendingIntent.getActivity(this,
-                0, notificationIntent, 0);
-        Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
-                .setContentTitle("Foreground Service")
-                .setContentText(deviceAddress)
-                .setSmallIcon(R.drawable.ic_launcher_background)
-                .setContentIntent(pendingIntent)
-                .build();
-
-        startForeground(1, notification);
+        Notification notification = new NotificationCompat.Builder(this, WARNING_CHANNEL_ID)
+                .setContentText("Loading . . .").build();
+        final int notifyID = 1;
+        startForeground(notifyID, notification);
         //do heavy work on a background thread
         connectMockup(deviceAddress);
-        //stopSelf();
+        TemperatureService.isRunning = true;
+
         return START_NOT_STICKY;
     }
 
-    public void refreshNotifications(float temperature) {
-        if (mBuilder == null) {
-            mBuilder = new NotificationCompat.Builder(this, CHANNEL_ID);
-            mBuilder.setAutoCancel(false);
-            mBuilder.setOngoing(true);
-            mBuilder.setOnlyAlertOnce(true);
-            mBuilder.setVisibility(NotificationCompat.VISIBILITY_PRIVATE);
-            mBuilder.setSmallIcon(R.drawable.ic_launcher_background);
-            mBuilder.setOngoing(true);
-            mBuilder.setContentTitle("Title");
-        }
-
-        mBuilder.setContentText("Temperature :" + temperature + " Cº");
-
-
-        NotificationManager mNotificationManager =
-                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        // Sets an ID for the notification, so it can be updated
-        int notifyID = 1;
-        mNotificationManager.notify(notifyID, mBuilder.build());
-    }
 
     private void connectMockup(String deviceAdress) {
-        stopService = false;
         Log.i(TAG, "In onStartCommand");
         new Thread(new Runnable() {
             public void run() {
                 try {
                     Random rand = new Random();
-                    while (!stopService) {
+                    while (TemperatureService.isRunning) {
                         onTemperatureChanged(rand.nextFloat() * 40);
-
                         Thread.sleep(5000);
                     }
                 } catch (InterruptedException e) {
@@ -140,7 +138,7 @@ public class TemperatureService extends Service implements TemperatureGattCallba
     public void onDestroy() {
         super.onDestroy();
         Log.i(TAG, "onDestroy");
-        stopService = true;
+        TemperatureService.isRunning = false;
     }
 
     @Override
@@ -163,24 +161,11 @@ public class TemperatureService extends Service implements TemperatureGattCallba
 
     @Override
     public void onTemperatureChanged(float temperature) {
-        if (temperature < 10) {
-            Notification notification = new NotificationCompat.Builder(this, IMPORTANT_CHANNEL_ID)
-                    .setContentTitle("Foreground Service")
-                    .setContentText("CADENA DE FRIO ROTA")
-                    .setSmallIcon(R.drawable.ic_launcher_background)
-                    .build();
-
-
-            NotificationManager mNotificationManager =
-                    (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-            // Sets an ID for the notification, so it can be updated
-            int notifyID = 2;
-            mNotificationManager.notify(notifyID, notification);
-        }
-
-
-        refreshNotifications(temperature);
         Log.i(TAG, "onTemperatureChanged " + temperature);
+        if (temperature < 10) {
+            notifyWarningTemperature(temperature);
+        }
+        notifyStateTemperature(temperature);
         Intent broadcastIntent = new Intent();
         broadcastIntent.setAction(MainActivity.mBroadcastIntegerAction);
         broadcastIntent.putExtra("temperature", temperature);
