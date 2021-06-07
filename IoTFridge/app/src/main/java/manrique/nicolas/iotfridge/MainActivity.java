@@ -78,7 +78,7 @@ public class MainActivity extends AppCompatActivity {
             Log.d(TAG, "DEVICE NOT FOUND");
         } else {
             mTvDeviceInfo.setText("Device \'" + DEVICE_NAME + "\' Found)");
-            Log.d(TAG, "DEVICE FOUND : " + mDevice.getName());
+            Log.d(TAG, "DEVICE FOUND : " + mDevice.getAddress());
         }
     }
 
@@ -108,13 +108,16 @@ public class MainActivity extends AppCompatActivity {
     public void startService() {
         if (TemperatureService.isRunning)
             return;
+
+        if (mDevice == null)
+            return;
+
         mScConnection.setEnabled(false);
         Intent serviceIntent = new Intent(this, TemperatureService.class);
-        String adress = "Hola";
-        if (mDevice != null) {
-            adress = mDevice.getAddress();
-        }
-        serviceIntent.putExtra("inputExtra", adress);
+
+        String address = mDevice.getAddress();
+
+        serviceIntent.putExtra("deviceAddress", address);
         ContextCompat.startForegroundService(this, serviceIntent);
     }
 

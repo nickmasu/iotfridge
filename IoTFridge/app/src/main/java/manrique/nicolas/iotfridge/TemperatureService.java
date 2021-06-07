@@ -6,6 +6,7 @@ import android.app.NotificationManager;
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCallback;
 import android.content.Intent;
 import android.os.Build;
@@ -31,6 +32,7 @@ public class TemperatureService extends Service implements TemperatureGattCallba
     private NotificationManager mNotificationManager;
     private NotificationCompat.Builder mStateBuilder;
     private NotificationCompat.Builder mWarningBuilder;
+    private BluetoothGatt mConection;
 
     @Override
     public void onCreate() {
@@ -96,9 +98,9 @@ public class TemperatureService extends Service implements TemperatureGattCallba
         startForeground(notifyID, notification);
         //do heavy work on a background thread
         // connectMockup(deviceAddress);
-        connect(deviceAddress);
-        TemperatureService.isRunning = true;
 
+        TemperatureService.isRunning = true;
+        connect(deviceAddress);
         return START_NOT_STICKY;
     }
 
@@ -129,7 +131,8 @@ public class TemperatureService extends Service implements TemperatureGattCallba
             if (device.getAddress().equals(deviceAddress)) {
                 //connect to the device found
                 BluetoothGattCallback mGattCallback = new TemperatureGattCallback(this);
-                device.connectGatt(this, false, mGattCallback);
+                mConection = device.connectGatt(this, false, mGattCallback);
+
                 return;
             }
         }
@@ -147,12 +150,14 @@ public class TemperatureService extends Service implements TemperatureGattCallba
         super.onDestroy();
         TemperatureService.isRunning = false;
         Log.i(TAG, "onDestroy");
+        if (mConection != null)
+            mConection.close();
     }
 
     @Override
     public void onConnectionSuccessful() {
         Log.i(TAG, "onConnectionSuccessful ");
-        broadcastActionConnection(false, "Device connected");
+        broadcastActionConnection(true, "Device UART connected");
     }
 
     @Override
@@ -172,7 +177,7 @@ public class TemperatureService extends Service implements TemperatureGattCallba
     @Override
     public void onTemperatureChanged(float temperature) {
         Log.i(TAG, "onTemperatureChanged " + temperature);
-        if (temperature < 10) {
+        if (temperature > 30) {
             notifyWarningTemperature(temperature);
         }
         notifyStateTemperature(temperature);
