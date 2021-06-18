@@ -41,7 +41,7 @@ public class MainActivity extends AppCompatActivity {
 
         mIntentFilter = new IntentFilter();
         mIntentFilter.addAction(AmbientInfoService.ACTION_CONNECTION_STATUS);
-        mIntentFilter.addAction(AmbientInfoService.ACTION_TEMPERATURE);
+        mIntentFilter.addAction(AmbientInfoService.ACTION_AMBIENT_INFO);
 
         mHandler = new Handler(); // Initialize the Handler from the Main Thread
 
@@ -144,7 +144,7 @@ public class MainActivity extends AppCompatActivity {
                     stopService();
                     mScConnection.setChecked(false);
                 }
-            } else if (intent.getAction().equals(AmbientInfoService.ACTION_TEMPERATURE)) {
+            } else if (intent.getAction().equals(AmbientInfoService.ACTION_AMBIENT_INFO)) {
                 mTvTemperature.setText(intent.getFloatExtra("temperature", 0) + "\n\n");
 
             }

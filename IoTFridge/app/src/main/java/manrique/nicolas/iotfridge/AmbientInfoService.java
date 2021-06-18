@@ -26,7 +26,16 @@ public class AmbientInfoService extends Service implements AmbientInfoGattCallba
     public static final String WARNING_CHANNEL_ID = "WarningChannelId";
 
     public static final String ACTION_CONNECTION_STATUS = "manrique.nicolas.action.connection";
-    public static final String ACTION_TEMPERATURE = "manrique.nicolas.action.temperature";
+    public static final String ACTION_AMBIENT_INFO = "manrique.nicolas.action.temperature";
+
+    public static final String EXTRA_ADDRESS = "deviceAddress";
+
+    public static final String EXTRA_CONNECTION_STATE = "isConnected";
+    public static final String EXTRA_CONNECTION_MESSAGE = "connectionMessage";
+
+    public static final String EXTRA_AMBIENT_TEMPERATURE = "temperature";
+    public static final String EXTRA_AMBIENT_HUMIDITY = "humidity";
+    public static final String EXTRA_AMBIENT_BATTERY = "battery";
 
     private static final String TAG = "TemperatureService";
     private NotificationManager mNotificationManager;
@@ -58,7 +67,7 @@ public class AmbientInfoService extends Service implements AmbientInfoGattCallba
     }
 
 
-    private void notifyAmbientState(float temperature, float humidity, float battery) {
+    private void notifyAmbientInfo(float temperature, float humidity, float battery) {
         if (mStateBuilder == null) {
             mStateBuilder = new NotificationCompat.Builder(this, WARNING_CHANNEL_ID);
             mStateBuilder
@@ -67,10 +76,8 @@ public class AmbientInfoService extends Service implements AmbientInfoGattCallba
                     .setOnlyAlertOnce(true)
                     .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
                     .setSmallIcon(R.drawable.ic_launcher_background)
-                    .setOngoing(true)
-                    .setContentTitle("Ambient");
+                    .setOngoing(true);
         }
-
 
         mStateBuilder.setContentText(String.valueOf(temperature) + " Cº  -  "
                 + String.valueOf(humidity) + " H  -  "
@@ -95,15 +102,13 @@ public class AmbientInfoService extends Service implements AmbientInfoGattCallba
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        String deviceAddress = intent.getStringExtra("deviceAddress");
+        String deviceAddress = intent.getStringExtra(EXTRA_ADDRESS);
         Notification notification = new NotificationCompat.Builder(this, WARNING_CHANNEL_ID)
-                .setContentText("Loading . . .").build();
+                .setContentText("").build();
         final int notifyID = 1;
         startForeground(notifyID, notification);
-        ;
 
         AmbientInfoService.isRunning = true;
-
         //do heavy work on a background thread
         connectMockup(deviceAddress);
         // connect(deviceAddress);
@@ -154,8 +159,9 @@ public class AmbientInfoService extends Service implements AmbientInfoGattCallba
     @Override
     public void onDestroy() {
         super.onDestroy();
-        AmbientInfoService.isRunning = false;
         Log.i(TAG, "onDestroy");
+
+        AmbientInfoService.isRunning = false;
         if (mConnection != null)
             mConnection.close();
     }
@@ -175,26 +181,28 @@ public class AmbientInfoService extends Service implements AmbientInfoGattCallba
     private void broadcastActionConnection(boolean connected, String message) {
         Intent broadcastIntent = new Intent();
         broadcastIntent.setAction(ACTION_CONNECTION_STATUS);
-        broadcastIntent.putExtra("connected", connected);
-        broadcastIntent.putExtra("message", message);
+        broadcastIntent.putExtra(EXTRA_CONNECTION_STATE, connected);
+        broadcastIntent.putExtra(EXTRA_CONNECTION_MESSAGE, message);
         sendBroadcast(broadcastIntent);
     }
 
     @Override
     public void onAmbientChanged(float temperature, float humidity, float battery) {
-        Log.i(TAG, "onTemperatureChanged " + temperature);
+        Log.i(TAG, "onAmbientChanged " + temperature);
         if (temperature > 30) {
             notifyWarningTemperature(temperature);
         }
-        notifyAmbientState(temperature, humidity, battery);
-        broadcastActionTemperature(temperature);
+        notifyAmbientInfo(temperature, humidity, battery);
+        broadcastActionAmbientInfo(temperature, humidity, battery);
     }
 
 
-    private void broadcastActionTemperature(float temperature) {
+    private void broadcastActionAmbientInfo(float temperature, float humidity, float battery) {
         Intent broadcastIntent = new Intent();
-        broadcastIntent.setAction(ACTION_TEMPERATURE);
-        broadcastIntent.putExtra("temperature", temperature);
+        broadcastIntent.setAction(ACTION_AMBIENT_INFO);
+        broadcastIntent.putExtra(EXTRA_AMBIENT_TEMPERATURE, temperature);
+        broadcastIntent.putExtra(EXTRA_AMBIENT_HUMIDITY, humidity);
+        broadcastIntent.putExtra(EXTRA_AMBIENT_BATTERY, battery);
         sendBroadcast(broadcastIntent);
     }
 }
