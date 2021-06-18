@@ -19,7 +19,7 @@ import androidx.core.app.NotificationCompat;
 import java.util.Random;
 import java.util.Set;
 
-public class TemperatureService extends Service implements TemperatureGattCallback.Listener {
+public class AmbientInfoService extends Service implements AmbientInfoGattCallback.Listener {
 
     public static boolean isRunning = false;
     public static final String STATE_CHANNEL_ID = "StateChannelId";
@@ -96,11 +96,13 @@ public class TemperatureService extends Service implements TemperatureGattCallba
                 .setContentText("Loading . . .").build();
         final int notifyID = 1;
         startForeground(notifyID, notification);
-        //do heavy work on a background thread
-        // connectMockup(deviceAddress);
+        ;
 
-        TemperatureService.isRunning = true;
-        connect(deviceAddress);
+        AmbientInfoService.isRunning = true;
+
+        //do heavy work on a background thread
+        connectMockup(deviceAddress);
+        // connect(deviceAddress);
         return START_NOT_STICKY;
     }
 
@@ -111,8 +113,10 @@ public class TemperatureService extends Service implements TemperatureGattCallba
             public void run() {
                 try {
                     Random rand = new Random();
-                    while (TemperatureService.isRunning) {
+                    while (AmbientInfoService.isRunning) {
                         onTemperatureChanged(rand.nextFloat() * 40);
+                        onHumidityChanged((rand.nextFloat() * 10));
+                        onBatteryChanged((rand.nextFloat() * 100));
                         Thread.sleep(5000);
                     }
                 } catch (InterruptedException e) {
@@ -130,7 +134,7 @@ public class TemperatureService extends Service implements TemperatureGattCallba
         for (BluetoothDevice device : pairedDevices) {
             if (device.getAddress().equals(deviceAddress)) {
                 //connect to the device found
-                BluetoothGattCallback mGattCallback = new TemperatureGattCallback(this);
+                BluetoothGattCallback mGattCallback = new AmbientInfoGattCallback(this);
                 mConection = device.connectGatt(this, false, mGattCallback);
 
                 return;
@@ -148,7 +152,7 @@ public class TemperatureService extends Service implements TemperatureGattCallba
     @Override
     public void onDestroy() {
         super.onDestroy();
-        TemperatureService.isRunning = false;
+        AmbientInfoService.isRunning = false;
         Log.i(TAG, "onDestroy");
         if (mConection != null)
             mConection.close();
@@ -182,6 +186,16 @@ public class TemperatureService extends Service implements TemperatureGattCallba
         }
         notifyStateTemperature(temperature);
         broadcastActionTemperature(temperature);
+    }
+
+    @Override
+    public void onHumidityChanged(float humidity) {
+        Log.i(TAG, "onHumidityChanged " + humidity);
+    }
+
+    @Override
+    public void onBatteryChanged(float battery) {
+        Log.i(TAG, "onBatteryChanged " + battery);
     }
 
     private void broadcastActionTemperature(float temperature) {

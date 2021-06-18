@@ -1,15 +1,7 @@
 package manrique.nicolas.iotfridge;
 
-import android.app.Notification;
-import android.app.PendingIntent;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothGatt;
-import android.bluetooth.BluetoothGattCallback;
-import android.bluetooth.BluetoothGattCharacteristic;
-import android.bluetooth.BluetoothGattDescriptor;
-import android.bluetooth.BluetoothGattService;
-import android.bluetooth.BluetoothProfile;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -25,10 +17,7 @@ import android.util.Log;
 import android.widget.CompoundButton;
 import android.widget.TextView;
 
-import manrique.nicolas.iotfridge.R;
-
 import java.util.Set;
-import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -51,8 +40,8 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         mIntentFilter = new IntentFilter();
-        mIntentFilter.addAction(TemperatureService.ACTION_CONNECTION_STATUS);
-        mIntentFilter.addAction(TemperatureService.ACTION_TEMPERATURE);
+        mIntentFilter.addAction(AmbientInfoService.ACTION_CONNECTION_STATUS);
+        mIntentFilter.addAction(AmbientInfoService.ACTION_TEMPERATURE);
 
         mHandler = new Handler(); // Initialize the Handler from the Main Thread
 
@@ -63,15 +52,16 @@ public class MainActivity extends AppCompatActivity {
         mScConnection.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (isChecked)
-                    startService();
+                    // startService();
+                    startMockupService();
                 else
                     stopService();
             }
         });
 
         mDevice = finDevice();
-        mScConnection.setChecked(TemperatureService.isRunning);
-        mScConnection.setEnabled(mDevice != null); // allowed using a real device
+        mScConnection.setChecked(AmbientInfoService.isRunning);
+        // mScConnection.setEnabled(mDevice != null); // allowed using a real device
 
         if (mDevice == null) {
             mTvDeviceInfo.setText("Device \'" + DEVICE_NAME + "\' Not Found");
@@ -105,15 +95,24 @@ public class MainActivity extends AppCompatActivity {
         return null;
     }
 
+    public void startMockupService() {
+        if (AmbientInfoService.isRunning)
+            return;
+        mScConnection.setEnabled(false);
+        Intent serviceIntent = new Intent(this, AmbientInfoService.class);
+        serviceIntent.putExtra("deviceAddress", "FAKE");
+        ContextCompat.startForegroundService(this, serviceIntent);
+    }
+
     public void startService() {
-        if (TemperatureService.isRunning)
+        if (AmbientInfoService.isRunning)
             return;
 
         if (mDevice == null)
             return;
 
         mScConnection.setEnabled(false);
-        Intent serviceIntent = new Intent(this, TemperatureService.class);
+        Intent serviceIntent = new Intent(this, AmbientInfoService.class);
 
         String address = mDevice.getAddress();
 
@@ -122,9 +121,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void stopService() {
-        if (!TemperatureService.isRunning)
+        if (!AmbientInfoService.isRunning)
             return;
-        Intent serviceIntent = new Intent(this, TemperatureService.class);
+        Intent serviceIntent = new Intent(this, AmbientInfoService.class);
         stopService(serviceIntent);
     }
 
@@ -139,13 +138,13 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onReceive(Context context, Intent intent) {
             mScConnection.setEnabled(true);
-            if (intent.getAction().equals(TemperatureService.ACTION_CONNECTION_STATUS)) {
+            if (intent.getAction().equals(AmbientInfoService.ACTION_CONNECTION_STATUS)) {
                 mTvDeviceInfo.setText(intent.getStringExtra("message") + "\n\n");
                 if (!intent.getBooleanExtra("connected", false)) {
                     stopService();
                     mScConnection.setChecked(false);
                 }
-            } else if (intent.getAction().equals(TemperatureService.ACTION_TEMPERATURE)) {
+            } else if (intent.getAction().equals(AmbientInfoService.ACTION_TEMPERATURE)) {
                 mTvTemperature.setText(intent.getFloatExtra("temperature", 0) + "\n\n");
 
             }

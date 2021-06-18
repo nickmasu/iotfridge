@@ -10,7 +10,7 @@ import android.util.Log;
 
 import java.util.UUID;
 
-public class TemperatureGattCallback extends BluetoothGattCallback {
+public class AmbientInfoGattCallback extends BluetoothGattCallback {
 
     /**
      * Interface to listen events of connectios and temperatur changes
@@ -22,6 +22,10 @@ public class TemperatureGattCallback extends BluetoothGattCallback {
         void onConnectionError(String error);
 
         void onTemperatureChanged(float temperature);
+
+        void onHumidityChanged(float humidity);
+
+        void onBatteryChanged(float battery);
     }
 
     // --------------------------------------------------------------------------------------------
@@ -39,7 +43,7 @@ public class TemperatureGattCallback extends BluetoothGattCallback {
 
     private Listener mListener;
 
-    public TemperatureGattCallback(Listener listener) {
+    public AmbientInfoGattCallback(Listener listener) {
         mListener = listener;
     }
 
@@ -92,6 +96,8 @@ public class TemperatureGattCallback extends BluetoothGattCallback {
     public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
         float temperature = Float.parseFloat(characteristic.getStringValue(0));
         mListener.onTemperatureChanged(temperature);
+        mListener.onHumidityChanged(temperature + 100);
+        mListener.onBatteryChanged(temperature % 100);
         Log.d(TAG, "GATT CALLBACK : onCharacteristicChanged" + temperature);
     }
 
