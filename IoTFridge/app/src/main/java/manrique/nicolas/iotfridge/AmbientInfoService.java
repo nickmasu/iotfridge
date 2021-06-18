@@ -32,7 +32,7 @@ public class AmbientInfoService extends Service implements AmbientInfoGattCallba
     private NotificationManager mNotificationManager;
     private NotificationCompat.Builder mStateBuilder;
     private NotificationCompat.Builder mWarningBuilder;
-    private BluetoothGatt mConection;
+    private BluetoothGatt mConnection;
 
     @Override
     public void onCreate() {
@@ -58,7 +58,7 @@ public class AmbientInfoService extends Service implements AmbientInfoGattCallba
     }
 
 
-    private void notifyStateTemperature(float temperature) {
+    private void notifyAmbientState(float temperature, float humidity, float battery) {
         if (mStateBuilder == null) {
             mStateBuilder = new NotificationCompat.Builder(this, WARNING_CHANNEL_ID);
             mStateBuilder
@@ -68,9 +68,13 @@ public class AmbientInfoService extends Service implements AmbientInfoGattCallba
                     .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
                     .setSmallIcon(R.drawable.ic_launcher_background)
                     .setOngoing(true)
-                    .setContentTitle("Title");
+                    .setContentTitle("Ambient");
         }
-        mStateBuilder.setContentText("Temperature : " + String.valueOf(temperature) + " Cº");
+
+
+        mStateBuilder.setContentText(String.valueOf(temperature) + " Cº  -  "
+                + String.valueOf(humidity) + " H  -  "
+                + String.valueOf(battery) + " %  Charge");
         // Sets an ID for the notification, so it can be updated
         final int notifyID = 1;
         mNotificationManager.notify(notifyID, mStateBuilder.build());
@@ -114,9 +118,7 @@ public class AmbientInfoService extends Service implements AmbientInfoGattCallba
                 try {
                     Random rand = new Random();
                     while (AmbientInfoService.isRunning) {
-                        onTemperatureChanged(rand.nextFloat() * 40);
-                        onHumidityChanged((rand.nextFloat() * 10));
-                        onBatteryChanged((rand.nextFloat() * 100));
+                        onAmbientChanged(rand.nextFloat() * 40, (rand.nextFloat() * 140), rand.nextFloat() * 100);
                         Thread.sleep(5000);
                     }
                 } catch (InterruptedException e) {
@@ -135,7 +137,7 @@ public class AmbientInfoService extends Service implements AmbientInfoGattCallba
             if (device.getAddress().equals(deviceAddress)) {
                 //connect to the device found
                 BluetoothGattCallback mGattCallback = new AmbientInfoGattCallback(this);
-                mConection = device.connectGatt(this, false, mGattCallback);
+                mConnection = device.connectGatt(this, false, mGattCallback);
 
                 return;
             }
@@ -154,8 +156,8 @@ public class AmbientInfoService extends Service implements AmbientInfoGattCallba
         super.onDestroy();
         AmbientInfoService.isRunning = false;
         Log.i(TAG, "onDestroy");
-        if (mConection != null)
-            mConection.close();
+        if (mConnection != null)
+            mConnection.close();
     }
 
     @Override
@@ -179,24 +181,15 @@ public class AmbientInfoService extends Service implements AmbientInfoGattCallba
     }
 
     @Override
-    public void onTemperatureChanged(float temperature) {
+    public void onAmbientChanged(float temperature, float humidity, float battery) {
         Log.i(TAG, "onTemperatureChanged " + temperature);
         if (temperature > 30) {
             notifyWarningTemperature(temperature);
         }
-        notifyStateTemperature(temperature);
+        notifyAmbientState(temperature, humidity, battery);
         broadcastActionTemperature(temperature);
     }
 
-    @Override
-    public void onHumidityChanged(float humidity) {
-        Log.i(TAG, "onHumidityChanged " + humidity);
-    }
-
-    @Override
-    public void onBatteryChanged(float battery) {
-        Log.i(TAG, "onBatteryChanged " + battery);
-    }
 
     private void broadcastActionTemperature(float temperature) {
         Intent broadcastIntent = new Intent();

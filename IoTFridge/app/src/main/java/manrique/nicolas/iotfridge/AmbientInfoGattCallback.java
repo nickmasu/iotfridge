@@ -13,7 +13,7 @@ import java.util.UUID;
 public class AmbientInfoGattCallback extends BluetoothGattCallback {
 
     /**
-     * Interface to listen events of connectios and temperatur changes
+     * Interface to listen events of connectios and ambient changes
      */
     public interface Listener {
 
@@ -21,16 +21,13 @@ public class AmbientInfoGattCallback extends BluetoothGattCallback {
 
         void onConnectionError(String error);
 
-        void onTemperatureChanged(float temperature);
+        void onAmbientChanged(float temperature, float humidity, float battery);
 
-        void onHumidityChanged(float humidity);
-
-        void onBatteryChanged(float battery);
     }
 
     // --------------------------------------------------------------------------------------------
 
-    private static final String TAG = "TemperatureGattCallback";
+    private static final String TAG = "AmbientInfoGattCallback";
 
     // UUIDs for UART service and associated characteristics.
     private static final UUID UART_UUID = UUID.fromString("6e400001-b5a3-f393-e0a9-e50e24dcca9e");
@@ -95,9 +92,7 @@ public class AmbientInfoGattCallback extends BluetoothGattCallback {
     @Override
     public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
         float temperature = Float.parseFloat(characteristic.getStringValue(0));
-        mListener.onTemperatureChanged(temperature);
-        mListener.onHumidityChanged(temperature + 100);
-        mListener.onBatteryChanged(temperature % 100);
+        mListener.onAmbientChanged(temperature, temperature + 100, temperature % 100);
         Log.d(TAG, "GATT CALLBACK : onCharacteristicChanged" + temperature);
     }
 
