@@ -1,61 +1,76 @@
 package manrique.nicolas.iotfridge;
 
-import androidx.recyclerview.widget.RecyclerView;
-
+import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import manrique.nicolas.iotfridge.placeholder.PlaceholderContent.PlaceholderItem;
-import manrique.nicolas.iotfridge.databinding.FragmentSelectDeviceBinding;
+import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.List;
 
-/**
- * {@link RecyclerView.Adapter} that can display a {@link PlaceholderItem}.
- * TODO: Replace the implementation with code for your data type.
- */
 public class MyItemRecyclerViewAdapter extends RecyclerView.Adapter<MyItemRecyclerViewAdapter.ViewHolder> {
 
-    private final List<PlaceholderItem> mValues;
+    private List<String> mData;
+    private LayoutInflater mInflater;
+    private ItemClickListener mClickListener;
 
-    public MyItemRecyclerViewAdapter(List<PlaceholderItem> items) {
-        mValues = items;
+    // data is passed into the constructor
+    MyItemRecyclerViewAdapter(Context context, List<String> data) {
+        this.mInflater = LayoutInflater.from(context);
+        this.mData = data;
     }
 
+    // inflates the row layout from xml when needed
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        return new ViewHolder(FragmentSelectDeviceBinding.inflate(LayoutInflater.from(parent.getContext()), parent, false));
-
+        View view = mInflater.inflate(R.layout.fragment_select_device_item, parent, false);
+        return new ViewHolder(view);
     }
 
+    // binds the data to the TextView in each row
     @Override
-    public void onBindViewHolder(final ViewHolder holder, int position) {
-        holder.mItem = mValues.get(position);
-        //holder.mIdView.setText(mValues.get(position).id);
-        //holder.mContentView.setText(mValues.get(position).content);
+    public void onBindViewHolder(ViewHolder holder, int position) {
+        String animal = mData.get(position);
+        holder.myTextView.setText(animal);
     }
 
+    // total number of rows
     @Override
     public int getItemCount() {
-        return mValues.size();
+        return mData.size();
     }
 
-    public class ViewHolder extends RecyclerView.ViewHolder {
-        //public final TextView mIdView;
-        //public final TextView mContentView;
-        public PlaceholderItem mItem;
 
-        public ViewHolder(FragmentSelectDeviceBinding binding) {
-            super(binding.getRoot());
-            //mIdView = binding.itemNumber;
-            //mContentView = binding.content;
+    // stores and recycles views as they are scrolled off screen
+    public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+        TextView myTextView;
+
+        ViewHolder(View itemView) {
+            super(itemView);
+            myTextView = itemView.findViewById(R.id.tvDeviceName);
+            itemView.setOnClickListener(this);
         }
 
         @Override
-        public String toString() {
-            return super.toString() + " '" + "'";
+        public void onClick(View view) {
+            if (mClickListener != null) mClickListener.onItemClick(view, getAdapterPosition());
         }
+    }
+
+    // convenience method for getting data at click position
+    String getItem(int id) {
+        return mData.get(id);
+    }
+
+    // allows clicks events to be caught
+    void setClickListener(ItemClickListener itemClickListener) {
+        this.mClickListener = itemClickListener;
+    }
+
+    // parent activity will implement this method to respond to click events
+    public interface ItemClickListener {
+        void onItemClick(View view, int position);
     }
 }
