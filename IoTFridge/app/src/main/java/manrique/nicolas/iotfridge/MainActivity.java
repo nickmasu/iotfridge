@@ -13,11 +13,11 @@ import android.content.IntentSender;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.IntentSenderRequest;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -27,37 +27,6 @@ public class MainActivity extends AppCompatActivity {
 
 
     private TextView mTvBackground;
-    // You can do the assignment inside onAttach or onCreate, i.e, before the activity is displayed
-    ActivityResultLauncher<Intent> enableBluetoothLauncher = registerForActivityResult(
-            new ActivityResultContracts.StartActivityForResult(),
-            result -> {
-                if (result.getResultCode() == Activity.RESULT_CANCELED)
-                    mTvBackground.setText("You must enable Blueooth to use this application.");
-                else
-                    askForDevice();
-
-            });
-
-
-    ActivityResultLauncher<IntentSenderRequest> selectDeviceLauncher = registerForActivityResult(
-            new ActivityResultContracts.StartIntentSenderForResult(),
-            result -> {
-                if (result.getResultCode() == Activity.RESULT_CANCELED)
-                    mTvBackground.setText("You must to pair a device to use this application.");
-                else {
-                    Intent data = result.getData();
-                    BluetoothDevice deviceToPair = data.getParcelableExtra(
-                            CompanionDeviceManager.EXTRA_DEVICE
-                    );
-
-                    if (deviceToPair != null) {
-                        mTvBackground.setText("Connected to " + deviceToPair.getName());
-                    } else {
-                        mTvBackground.setText("Device wans't connected correctly.");
-                    }
-                }
-
-            });
 
 
     @Override
@@ -66,21 +35,17 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         mTvBackground = findViewById(R.id.tvBackground);
-
-
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-        if (mBluetoothAdapter == null) {
+
+        if (mBluetoothAdapter == null)
             mTvBackground.setText("Bluetooth Not Supported");
-            return;
-        }
 
+        else if (mBluetoothAdapter.isEnabled())
+            askToConnectDevice();
 
-        if (!mBluetoothAdapter.isEnabled()) {
-            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            enableBluetoothLauncher.launch(enableBtIntent);
-        } else {
-            askForDevice();
-        }
+        else
+            askToConnectBluetooth();
+
 
 
         /*if (savedInstanceState == null) {
@@ -92,8 +57,51 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    ActivityResultLauncher<Intent> enableBluetoothLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
 
-    private void askForDevice() {
+                if (result.getResultCode() == Activity.RESULT_CANCELED) {
+                    Toast.makeText(this, "You must enable Blueooth to use this application.", Toast.LENGTH_SHORT).show();
+                    askToConnectBluetooth();
+                } else
+                    askToConnectDevice();
+
+            });
+
+    private void askToConnectBluetooth() {
+
+
+        Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+        enableBluetoothLauncher.launch(enableBtIntent);
+    }
+
+    ActivityResultLauncher<IntentSenderRequest> selectDeviceLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartIntentSenderForResult(),
+            result -> {
+                if (result.getResultCode() == Activity.RESULT_CANCELED) {
+                    Toast.makeText(this, "You must to pair a device to use this application.", Toast.LENGTH_SHORT).show();
+                    askToConnectDevice();
+                } else {
+                    Intent data = result.getData();
+                    BluetoothDevice deviceToPair = data.getParcelableExtra(
+                            CompanionDeviceManager.EXTRA_DEVICE
+                    );
+
+                    if (deviceToPair != null)
+                        onDeviceConnected(deviceToPair);
+                    else {
+                        Toast.makeText(this, "Device wans't connected correctly.", Toast.LENGTH_SHORT).show();
+                        askToConnectDevice();
+                    }
+
+                }
+
+            });
+
+    private void askToConnectDevice() {
+
+
         CompanionDeviceManager deviceManager = (CompanionDeviceManager) getSystemService(
                 Context.COMPANION_DEVICE_SERVICE
         );
@@ -123,15 +131,18 @@ public class MainActivity extends AppCompatActivity {
                     public void onDeviceFound(IntentSender chooserLauncher) {
                         IntentSenderRequest request = new IntentSenderRequest.Builder(chooserLauncher).build();
                         selectDeviceLauncher.launch(request);
-                        //startIntentSenderForResult(chooserLauncher,SELECT_DEVICE_REQUEST_CODE, null, 0, 0, 0);
                     }
 
                     @Override
                     public void onFailure(CharSequence error) {
-                        // handle failure to find the companion device
+                        mTvBackground.setText("Something went wrong selecting devices.");
                     }
                 }, null);
     }
 
+
+    private void onDeviceConnected(BluetoothDevice device) {
+        mTvBackground.setText("Connected to " + device.getName());
+    }
 
 }
