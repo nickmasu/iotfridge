@@ -54,6 +54,10 @@ public class SelectDeviceFragment extends Fragment implements MyItemRecyclerView
             mColumnCount = getArguments().getInt(ARG_COLUMN_COUNT);
         }
 
+
+
+
+
     }
 
     @Override
