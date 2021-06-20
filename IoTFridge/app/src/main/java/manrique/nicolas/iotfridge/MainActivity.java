@@ -21,10 +21,8 @@ import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static final int SELECT_DEVICE_REQUEST_CODE = 23;
     private String TAG = "MainActivity";
     private BluetoothAdapter mBluetoothAdapter;
-
 
     private TextView mTvBackground;
 
@@ -45,16 +43,6 @@ public class MainActivity extends AppCompatActivity {
 
         else
             askToConnectBluetooth();
-
-
-
-        /*if (savedInstanceState == null) {
-            getSupportFragmentManager().beginTransaction()
-                    .setReorderingAllowed(true)
-                    .add(R.id.fragment_container_view, SelectDeviceFragment.class, null)
-                    .commit();
-        }*/
-
     }
 
     ActivityResultLauncher<Intent> enableBluetoothLauncher = registerForActivityResult(
@@ -62,7 +50,7 @@ public class MainActivity extends AppCompatActivity {
             result -> {
 
                 if (result.getResultCode() == Activity.RESULT_CANCELED) {
-                    Toast.makeText(this, "You must enable Blueooth to use this application.", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "You must enable Bluetooth to use this application.", Toast.LENGTH_SHORT).show();
                     askToConnectBluetooth();
                 } else
                     askToConnectDevice();
@@ -70,8 +58,6 @@ public class MainActivity extends AppCompatActivity {
             });
 
     private void askToConnectBluetooth() {
-
-
         Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
         enableBluetoothLauncher.launch(enableBtIntent);
     }
@@ -79,29 +65,25 @@ public class MainActivity extends AppCompatActivity {
     ActivityResultLauncher<IntentSenderRequest> selectDeviceLauncher = registerForActivityResult(
             new ActivityResultContracts.StartIntentSenderForResult(),
             result -> {
+
                 if (result.getResultCode() == Activity.RESULT_CANCELED) {
                     Toast.makeText(this, "You must to pair a device to use this application.", Toast.LENGTH_SHORT).show();
                     askToConnectDevice();
                 } else {
-                    Intent data = result.getData();
-                    BluetoothDevice deviceToPair = data.getParcelableExtra(
-                            CompanionDeviceManager.EXTRA_DEVICE
-                    );
+                    BluetoothDevice deviceToPair = result.getData().getParcelableExtra(
+                            CompanionDeviceManager.EXTRA_DEVICE);
 
-                    if (deviceToPair != null)
-                        onDeviceConnected(deviceToPair);
-                    else {
+                    if (deviceToPair == null) {
                         Toast.makeText(this, "Device wans't connected correctly.", Toast.LENGTH_SHORT).show();
                         askToConnectDevice();
+                    } else {
+                        onDeviceConnected(deviceToPair);
+
                     }
-
                 }
-
             });
 
     private void askToConnectDevice() {
-
-
         CompanionDeviceManager deviceManager = (CompanionDeviceManager) getSystemService(
                 Context.COMPANION_DEVICE_SERVICE
         );
@@ -115,12 +97,9 @@ public class MainActivity extends AppCompatActivity {
                         //.addServiceUuid(new ParcelUuid(new UUID(0x123abcL, -1L)), null)
                         .build();
 
-        // The argument provided in setSingleDevice() determines whether a single
-        // device name or a list of device names is presented to the user as
-        // pairing options.
+
         AssociationRequest pairingRequest = new AssociationRequest.Builder()
                 .addDeviceFilter(deviceFilter)
-                //.setSingleDevice(true)
                 .build();
 
         // When the app tries to pair with the Bluetooth device, show the
@@ -143,6 +122,13 @@ public class MainActivity extends AppCompatActivity {
 
     private void onDeviceConnected(BluetoothDevice device) {
         mTvBackground.setText("Connected to " + device.getName());
+
+        /*if (savedInstanceState == null) {
+            getSupportFragmentManager().beginTransaction()
+                    .setReorderingAllowed(true)
+                    .add(R.id.fragment_container_view, SelectDeviceFragment.class, null)
+                    .commit();
+        }*/
     }
 
 }
