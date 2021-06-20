@@ -122,7 +122,6 @@ public class MainActivity extends AppCompatActivity {
 
     private void onDeviceConnected(BluetoothDevice device) {
         mTvBackground.setText("Connected to " + device.getName());
-
         /*if (savedInstanceState == null) {
             getSupportFragmentManager().beginTransaction()
                     .setReorderingAllowed(true)
