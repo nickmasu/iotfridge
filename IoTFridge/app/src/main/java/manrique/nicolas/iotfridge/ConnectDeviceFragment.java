@@ -1,19 +1,24 @@
 package manrique.nicolas.iotfridge;
 
+import android.bluetooth.BluetoothDevice;
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentResultListener;
 
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.TextView;
 
 /**
  * A simple {@link Fragment} subclass.
  * Use the {@link ConnectDeviceFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class ConnectDeviceFragment extends Fragment {
+public class ConnectDeviceFragment extends Fragment implements View.OnClickListener {
 
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -23,6 +28,10 @@ public class ConnectDeviceFragment extends Fragment {
     // TODO: Rename and change types of parameters
     private String mParam1;
     private String mParam2;
+    private TextView mTvName;
+    private TextView mTvAddress;
+    private Button mBtConnect;
+    private BluetoothDevice mDevice;
 
     public ConnectDeviceFragment() {
         // Required empty public constructor
@@ -49,16 +58,37 @@ public class ConnectDeviceFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
+            mDevice = getArguments().getParcelable("device");
         }
+
+
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_connect_device, container, false);
+        View view = inflater.inflate(R.layout.fragment_connect_device, container, false);
+
+        mTvName = view.findViewById(R.id.tvName);
+        mTvAddress = view.findViewById(R.id.tvAddress);
+        mBtConnect = view.findViewById(R.id.btConnect);
+
+
+        mTvName.setText("Name : " + mDevice.getName());
+        mTvAddress.setText("Address : " + mDevice.getAddress());
+
+        mBtConnect.setOnClickListener(this);
+        return view;
     }
+
+    @Override
+    public void onClick(View v) {
+        Bundle result = new Bundle();
+        result.putString("bundleKey", "result");
+        getParentFragmentManager().setFragmentResult("requestKey", result);
+    }
+
 }

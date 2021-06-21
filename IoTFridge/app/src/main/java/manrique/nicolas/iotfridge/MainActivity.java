@@ -13,7 +13,10 @@ import android.content.IntentSender;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.IntentSenderRequest;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentResultListener;
 
 import android.os.Bundle;
 import android.widget.TextView;
@@ -21,7 +24,8 @@ import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity {
 
-    private String TAG = "MainActivity";
+    private static final String TAG_FRAGMENT_DEVICE_INFO = "TAG_FRAGMENT_DEVICE_INFO";
+    private static final String TAG = "MainActivity";
     private BluetoothAdapter mBluetoothAdapter;
 
     private TextView mTvBackground;
@@ -43,6 +47,21 @@ public class MainActivity extends AppCompatActivity {
 
         else
             askToConnectBluetooth();
+
+
+        // listener
+
+
+        getSupportFragmentManager().setFragmentResultListener("requestKey", this, new FragmentResultListener() {
+            @Override
+            public void onFragmentResult(@NonNull String requestKey, @NonNull Bundle result) {
+                // We use a String here, but any type that can be put in a Bundle is supported
+                String device = result.getString("bundleKey");
+                // Do something with the result
+            }
+        });
+
+
     }
 
     ActivityResultLauncher<Intent> enableBluetoothLauncher = registerForActivityResult(
@@ -121,13 +140,22 @@ public class MainActivity extends AppCompatActivity {
 
 
     private void onDeviceConnected(BluetoothDevice device) {
-        mTvBackground.setText("Connected to " + device.getName());
-        /*if (savedInstanceState == null) {
-            getSupportFragmentManager().beginTransaction()
-                    .setReorderingAllowed(true)
-                    .add(R.id.fragment_container_view, SelectDeviceFragment.class, null)
-                    .commit();
-        }*/
+        Bundle bundle = new Bundle();
+        bundle.putParcelable("device", device);
+
+        getSupportFragmentManager().beginTransaction()
+                .setReorderingAllowed(true)
+                .add(R.id.fragment_container_view, ConnectDeviceFragment.class, bundle, TAG_FRAGMENT_DEVICE_INFO)
+                .commit();
+
     }
 
+    @Override
+    public void onBackPressed() {
+        Fragment fragment = getSupportFragmentManager().findFragmentByTag(TAG_FRAGMENT_DEVICE_INFO);
+        if (fragment != null)
+            getSupportFragmentManager().beginTransaction().remove(fragment).commit();
+
+        askToConnectDevice();
+    }
 }
