@@ -7,13 +7,16 @@ import android.app.Service;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCallback;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.IBinder;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
+import androidx.preference.PreferenceManager;
 
 import java.util.Random;
 
@@ -45,6 +48,13 @@ public class AmbientInfoService extends Service implements AmbientInfoGattCallba
     private NotificationCompat.Builder mNotifyAmbientBuilder;
     private NotificationCompat.Builder mNotifyWarningBuilder;
     private BluetoothGatt mGattConnection;
+    private boolean isMinimumTemperatureEnable;
+    private float minimumTemperature;
+    private boolean isMaximumTemperatureEnable;
+    private float maximumTemperature;
+    private boolean isMinimumBatteryEnable;
+    private float minimumBattery;
+    private boolean isDisconnectedDeviceEnable;
 
     @Override
     public void onCreate() {
@@ -114,10 +124,33 @@ public class AmbientInfoService extends Service implements AmbientInfoGattCallba
         AmbientInfoService.isRunning = true;
         AmbientInfoService.deviceConnected = device;
 
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+        sharedPref.registerOnSharedPreferenceChangeListener(new SharedPreferences.OnSharedPreferenceChangeListener() {
+            @Override
+            public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+                loadPreferences(sharedPref);
+            }
+        });
+        loadPreferences(sharedPref);
+
         //do heavy work on a background thread
         connectMockup(device);
         // connect(deviceAddress);
         return START_NOT_STICKY;
+    }
+
+    private void loadPreferences(SharedPreferences sharedPref) {
+
+        isMinimumTemperatureEnable = sharedPref.getBoolean("minimumTemperatureEnable", false);
+        minimumTemperature = Float.valueOf(sharedPref.getString("minimumTemperature", "-100"));
+
+        isMaximumTemperatureEnable = sharedPref.getBoolean("maximumTemperatureEnable", false);
+        maximumTemperature = Float.valueOf(sharedPref.getString("maximumTemperature", "100"));
+
+        isMinimumBatteryEnable = sharedPref.getBoolean("batteryEnable", false);
+        minimumBattery = Float.valueOf(sharedPref.getString("minimumBattery", "-100"));
+
+        isDisconnectedDeviceEnable = sharedPref.getBoolean("disconnectedEnable", false);
     }
 
     private void connectMockup(BluetoothDevice device) {
@@ -175,7 +208,8 @@ public class AmbientInfoService extends Service implements AmbientInfoGattCallba
     @Override
     public void onConnectionError(String error) {
         Log.i(TAG, "onConnectionError " + error);
-        notifyWarning("Device disconnected");
+        if (isDisconnectedDeviceEnable)
+            notifyWarning("Device disconnected");
         broadcastActionConnection(false, error);
     }
 
@@ -190,9 +224,16 @@ public class AmbientInfoService extends Service implements AmbientInfoGattCallba
     @Override
     public void onAmbientChanged(float temperature, float humidity, float battery) {
         Log.i(TAG, "onAmbientChanged " + temperature);
-        if (temperature > 30) {
-            notifyWarning("Warning Hot Temperature so high");
-        }
+
+        if (isMinimumTemperatureEnable && temperature <= minimumTemperature)
+            notifyWarning("Warning Temperature so low");
+
+        if (isMaximumTemperatureEnable && temperature >= maximumTemperature)
+            notifyWarning("Warning Temperature so high");
+
+        if (isMinimumBatteryEnable && temperature <= minimumBattery)
+            notifyWarning("Warning Battery level so low");
+
         notifyAmbient(temperature, humidity, battery);
         broadcastActionAmbientInfo(temperature, humidity, battery);
     }

@@ -1,12 +1,45 @@
-<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <SwitchPreferenceCompat
-        app:key="notifications"
-        app:title="Enable message notifications" />
 
-    <Preference
-        app:key="feedback"
-        app:summary="Report technical issues or suggest new features"
-        app:title="Send feedback" />
+    <SwitchPreference
+        android:key="minimumTemperatureEnable"
+        android:title="Enable notification for minimum temperature" />
+
+    <EditTextPreference
+        android:defaultValue="5"
+        android:dependency="minimumTemperatureEnable"
+        android:inputType="numberDecimal"
+        android:key="minimumTemperature"
+        android:title="Minimum Temperature"
+        app:useSimpleSummaryProvider="true" />
+
+    <SwitchPreference
+        android:key="maximumTemperatureEnable"
+        android:title="Enable notification for maximum temperature" />
+
+    <EditTextPreference
+        android:defaultValue="30"
+        android:dependency="maximumTemperatureEnable"
+        android:inputType="numberDecimal"
+        android:key="maximumTemperature"
+        android:title="Maximum Temperature"
+        app:useSimpleSummaryProvider="true" />
+
+    <SwitchPreference
+        android:key="batteryEnable"
+        android:title="Enable notification for low battery" />
+
+    <EditTextPreference
+        android:defaultValue="20"
+        android:dependency="batteryEnable"
+        android:inputType="numberDecimal"
+        android:key="minimumBattery"
+        android:title="Minimum Battery"
+        app:useSimpleSummaryProvider="true" />
+
+    <SwitchPreference
+        android:key="disconnectedEnable"
+        android:title="Enable notification for device disconnected" />
 
 </PreferenceScreen>
