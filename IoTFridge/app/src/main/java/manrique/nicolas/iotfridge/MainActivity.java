@@ -15,12 +15,17 @@ import androidx.activity.result.IntentSenderRequest;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentResultListener;
 
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import manrique.nicolas.iotfridge.settings.SettingsActivity;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -42,6 +47,10 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+
         mContext = this;
         mTvBackground = findViewById(R.id.tvBackground);
         BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
@@ -63,6 +72,19 @@ public class MainActivity extends AppCompatActivity {
         // listeners
         listenRequestOpenAmbientService();
         listenRequestCloseAmbientService();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_main_activity, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        Intent intent = new Intent(this, SettingsActivity.class);
+        startActivity(intent);
+        return true;
     }
 
     private void listenRequestOpenAmbientService() {
@@ -169,7 +191,7 @@ public class MainActivity extends AppCompatActivity {
         if (fragment != null)
             getSupportFragmentManager().beginTransaction().remove(fragment).commit();
 
-        askToConnectDevice();
+        // askToConnectDevice();
     }
 
     private void setAmbientInfoFragment() {
