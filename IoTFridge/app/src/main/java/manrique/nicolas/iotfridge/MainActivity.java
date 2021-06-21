@@ -38,6 +38,7 @@ public class MainActivity extends AppCompatActivity {
 
     public static final String REQUEST_START_AMBIENT_SERVICE = "REQUEST_START_AMBIENT_SERVICE";
     public static final String REQUEST_CLOSE_AMBIENT_SERVICE = "REQUEST_CLOSE_AMBIENT_SERVICE";
+    public static final String REQUEST_FORGET_DEVICE = "REQUEST_FORGET_DEVICE";
 
     public static final String PREFERENCES_DEVICE_ADDRESS = "PREFERENCES_DEVICE";
 
@@ -77,6 +78,7 @@ public class MainActivity extends AppCompatActivity {
         // listeners
         listenRequestOpenAmbientService();
         listenRequestCloseAmbientService();
+        listenRequestForgetDevice();
     }
 
     @Override
@@ -120,6 +122,22 @@ public class MainActivity extends AppCompatActivity {
                         Intent serviceIntent = new Intent(mContext, AmbientInfoService.class);
                         stopService(serviceIntent);
                         setDeviceFragment();
+                    }
+                });
+    }
+
+
+    private void listenRequestForgetDevice() {
+        getSupportFragmentManager().
+                setFragmentResultListener(REQUEST_FORGET_DEVICE, this, new FragmentResultListener() {
+                    @Override
+                    public void onFragmentResult(@NonNull String requestKey, @NonNull Bundle result) {
+                        Fragment fragment = getSupportFragmentManager().findFragmentByTag(TAG_FRAGMENT_DEVICE_INFO);
+                        if (fragment != null)
+                            getSupportFragmentManager().beginTransaction().remove(fragment).commit();
+                        mDevice = null;
+                        setPreferencesDevice(null);
+                        askToConnectDevice();
                     }
                 });
     }
@@ -212,7 +230,10 @@ public class MainActivity extends AppCompatActivity {
     private void setPreferencesDevice(BluetoothDevice device) {
         SharedPreferences sharedPref = getPreferences(Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPref.edit();
-        editor.putString(PREFERENCES_DEVICE_ADDRESS, device.getAddress());
+        if (device == null)
+            editor.putString(PREFERENCES_DEVICE_ADDRESS, "");
+        else
+            editor.putString(PREFERENCES_DEVICE_ADDRESS, device.getAddress());
         editor.apply();
     }
 

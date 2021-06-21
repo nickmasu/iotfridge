@@ -11,6 +11,13 @@
         android:layout_height="wrap_content"
         android:layout_weight="2" />
 
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/btForget"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Forget"
+        android:textSize="24sp" />
+
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
