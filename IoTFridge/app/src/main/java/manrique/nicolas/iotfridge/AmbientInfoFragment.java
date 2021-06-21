@@ -14,30 +14,10 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link ActiveAmbientFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
-public class ActiveAmbientFragment extends Fragment implements View.OnClickListener {
 
-    private BroadcastReceiver mReceiver = new BroadcastReceiver() {
+public class AmbientInfoFragment extends Fragment implements View.OnClickListener {
 
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            if (intent.getAction().equals(AmbientInfoService.ACTION_CONNECTION_STATUS)) {
-                if (!intent.getBooleanExtra(AmbientInfoService.EXTRA_CONNECTION_STATE, false)) {
-                    disconnectService();
-                }
-            } else if (intent.getAction().equals(AmbientInfoService.ACTION_AMBIENT_INFO)) {
-                float temperature = intent.getFloatExtra(AmbientInfoService.EXTRA_AMBIENT_TEMPERATURE, 0);
-                float humidity = intent.getFloatExtra(AmbientInfoService.EXTRA_AMBIENT_HUMIDITY, 0);
-                float battery = intent.getFloatExtra(AmbientInfoService.EXTRA_AMBIENT_BATTERY, 0);
-
-                updateAmbientInfo(temperature, humidity, battery);
-            }
-        }
-    };
+    private BroadcastReceiver mReceiver;
     private TextView mTvTemperature;
     private TextView mTvHumidity;
     private TextView mTvBattery;
@@ -45,16 +25,8 @@ public class ActiveAmbientFragment extends Fragment implements View.OnClickListe
     private IntentFilter mIntentFilter;
 
 
-    public ActiveAmbientFragment() {
+    public AmbientInfoFragment() {
         // Required empty public constructor
-    }
-
-
-    public static ActiveAmbientFragment newInstance(String param1, String param2) {
-        ActiveAmbientFragment fragment = new ActiveAmbientFragment();
-        Bundle args = new Bundle();
-        fragment.setArguments(args);
-        return fragment;
     }
 
     @Override
@@ -64,13 +36,31 @@ public class ActiveAmbientFragment extends Fragment implements View.OnClickListe
         mIntentFilter = new IntentFilter();
         mIntentFilter.addAction(AmbientInfoService.ACTION_CONNECTION_STATUS);
         mIntentFilter.addAction(AmbientInfoService.ACTION_AMBIENT_INFO);
+
+        mReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if (intent.getAction().equals(AmbientInfoService.ACTION_CONNECTION_STATUS)) {
+                    if (!intent.getBooleanExtra(AmbientInfoService.EXTRA_CONNECTION_STATE, false))
+                        disconnectService();
+
+                } else if (intent.getAction().equals(AmbientInfoService.ACTION_AMBIENT_INFO)) {
+                    float temperature = intent.getFloatExtra(AmbientInfoService.EXTRA_AMBIENT_TEMPERATURE, -1);
+                    float humidity = intent.getFloatExtra(AmbientInfoService.EXTRA_AMBIENT_HUMIDITY, -1);
+                    float battery = intent.getFloatExtra(AmbientInfoService.EXTRA_AMBIENT_BATTERY, -1);
+
+                    updateAmbientInfo(temperature, humidity, battery);
+                }
+            }
+        };
     }
+
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        View view = inflater.inflate(R.layout.fragment_active_ambient, container, false);
+        View view = inflater.inflate(R.layout.fragment_ambient_info, container, false);
 
         mTvTemperature = view.findViewById(R.id.tvTemperature);
         mTvHumidity = view.findViewById(R.id.tvHumidity);
@@ -88,7 +78,7 @@ public class ActiveAmbientFragment extends Fragment implements View.OnClickListe
 
     private void disconnectService() {
         Bundle result = new Bundle();
-        getParentFragmentManager().setFragmentResult("onDisconnectKey", result);
+        getParentFragmentManager().setFragmentResult(MainActivity.REQUEST_CLOSE_AMBIENT_SERVICE, result);
     }
 
     private void updateAmbientInfo(float temperature, float humidity, float battery) {

@@ -13,7 +13,7 @@ import java.util.UUID;
 public class AmbientInfoGattCallback extends BluetoothGattCallback {
 
     /**
-     * Interface to listen events of connectios and ambient changes
+     * Interface to listen events of connections and ambient changes
      */
     public interface Listener {
 
