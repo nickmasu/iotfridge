@@ -25,26 +25,35 @@ import android.widget.Toast;
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG_FRAGMENT_DEVICE_INFO = "TAG_FRAGMENT_DEVICE_INFO";
+    private static final String TAG_FRAGMENT_ACTIVE_AMBIENT = "TAG_FRAGMENT_ACTIVE_AMBIENT_INFO";
     private static final String TAG = "MainActivity";
     private BluetoothAdapter mBluetoothAdapter;
 
     private TextView mTvBackground;
+    private BluetoothDevice mDevice;
+    private Context mContext;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        mContext = this;
+
+        if (AmbientInfoService.isRunning)
+            mDevice = AmbientInfoService.connectedDevice;
 
         mTvBackground = findViewById(R.id.tvBackground);
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-
-        if (mBluetoothAdapter == null)
+        if (AmbientInfoService.isRunning) {
+            getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.fragment_container_view, ActiveAmbientFragment.class, null, TAG_FRAGMENT_ACTIVE_AMBIENT)
+                    .commit();
+        } else if (mBluetoothAdapter == null)
             mTvBackground.setText("Bluetooth Not Supported");
 
         else if (mBluetoothAdapter.isEnabled())
             askToConnectDevice();
-
         else
             askToConnectBluetooth();
 
@@ -55,9 +64,42 @@ public class MainActivity extends AppCompatActivity {
         getSupportFragmentManager().setFragmentResultListener("requestKey", this, new FragmentResultListener() {
             @Override
             public void onFragmentResult(@NonNull String requestKey, @NonNull Bundle result) {
-                // We use a String here, but any type that can be put in a Bundle is supported
-                String device = result.getString("bundleKey");
-                // Do something with the result
+                // Connect the service Start the other fragment
+                if (AmbientInfoService.isRunning)
+                    return;
+
+                if (mDevice == null)
+                    return;
+
+                Intent serviceIntent = new Intent(mContext, AmbientInfoService.class);
+                serviceIntent.putExtra("device", mDevice);
+                mContext.startForegroundService(serviceIntent);
+
+                Bundle bundle = new Bundle();
+                bundle.putParcelable("device", mDevice);
+
+                getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.fragment_container_view, ActiveAmbientFragment.class, bundle, TAG_FRAGMENT_ACTIVE_AMBIENT)
+                        .commit();
+            }
+        });
+
+
+        getSupportFragmentManager().setFragmentResultListener("onDisconnectKey", this, new FragmentResultListener() {
+            @Override
+            public void onFragmentResult(@NonNull String requestKey, @NonNull Bundle result) {
+                // Connect the service Start the other fragment
+                if (!AmbientInfoService.isRunning)
+                    return;
+                Intent serviceIntent = new Intent(mContext, AmbientInfoService.class);
+                stopService(serviceIntent);
+
+                Bundle bundle = new Bundle();
+                bundle.putParcelable("device", mDevice);
+
+                getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.fragment_container_view, ConnectDeviceFragment.class, bundle, TAG_FRAGMENT_DEVICE_INFO)
+                        .commit();
             }
         });
 
@@ -84,7 +126,6 @@ public class MainActivity extends AppCompatActivity {
     ActivityResultLauncher<IntentSenderRequest> selectDeviceLauncher = registerForActivityResult(
             new ActivityResultContracts.StartIntentSenderForResult(),
             result -> {
-
                 if (result.getResultCode() == Activity.RESULT_CANCELED) {
                     Toast.makeText(this, "You must to pair a device to use this application.", Toast.LENGTH_SHORT).show();
                     askToConnectDevice();
@@ -103,6 +144,9 @@ public class MainActivity extends AppCompatActivity {
             });
 
     private void askToConnectDevice() {
+        // clean message
+        mTvBackground.setText("");
+
         CompanionDeviceManager deviceManager = (CompanionDeviceManager) getSystemService(
                 Context.COMPANION_DEVICE_SERVICE
         );
@@ -140,6 +184,7 @@ public class MainActivity extends AppCompatActivity {
 
 
     private void onDeviceConnected(BluetoothDevice device) {
+        mDevice = device;
         Bundle bundle = new Bundle();
         bundle.putParcelable("device", device);
 
@@ -147,7 +192,6 @@ public class MainActivity extends AppCompatActivity {
                 .setReorderingAllowed(true)
                 .add(R.id.fragment_container_view, ConnectDeviceFragment.class, bundle, TAG_FRAGMENT_DEVICE_INFO)
                 .commit();
-
     }
 
     @Override
@@ -157,5 +201,12 @@ public class MainActivity extends AppCompatActivity {
             getSupportFragmentManager().beginTransaction().remove(fragment).commit();
 
         askToConnectDevice();
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        outState.putParcelable("device", mDevice);
+        //
+        super.onSaveInstanceState(outState);
     }
 }

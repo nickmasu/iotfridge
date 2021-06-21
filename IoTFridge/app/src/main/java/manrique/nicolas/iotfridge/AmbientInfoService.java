@@ -22,6 +22,8 @@ import java.util.Set;
 public class AmbientInfoService extends Service implements AmbientInfoGattCallback.Listener {
 
     public static boolean isRunning = false;
+    public static BluetoothDevice connectedDevice = null;
+
     public static final String STATE_CHANNEL_ID = "StateChannelId";
     public static final String WARNING_CHANNEL_ID = "WarningChannelId";
 
@@ -102,7 +104,8 @@ public class AmbientInfoService extends Service implements AmbientInfoGattCallba
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        String deviceAddress = intent.getStringExtra(EXTRA_ADDRESS);
+        BluetoothDevice device = intent.getParcelableExtra("device");
+        AmbientInfoService.connectedDevice = device;
         Notification notification = new NotificationCompat.Builder(this, WARNING_CHANNEL_ID)
                 .setContentText("").build();
         final int notifyID = 1;
@@ -110,13 +113,13 @@ public class AmbientInfoService extends Service implements AmbientInfoGattCallba
 
         AmbientInfoService.isRunning = true;
         //do heavy work on a background thread
-        connectMockup(deviceAddress);
+        connectMockup(device);
         // connect(deviceAddress);
         return START_NOT_STICKY;
     }
 
 
-    private void connectMockup(String deviceAddress) {
+    private void connectMockup(BluetoothDevice device) {
         Log.i(TAG, "In onStartCommand");
         new Thread(new Runnable() {
             public void run() {
@@ -135,19 +138,14 @@ public class AmbientInfoService extends Service implements AmbientInfoGattCallba
         }).start();
     }
 
-    private void connect(String deviceAddress) {
-        BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-        Set<BluetoothDevice> pairedDevices = bluetoothAdapter.getBondedDevices();
-        for (BluetoothDevice device : pairedDevices) {
-            if (device.getAddress().equals(deviceAddress)) {
-                //connect to the device found
-                BluetoothGattCallback mGattCallback = new AmbientInfoGattCallback(this);
-                mConnection = device.connectGatt(this, false, mGattCallback);
-
-                return;
-            }
+    private void connect(BluetoothDevice device) {
+        if (device != null) {
+            //connect to the device found
+            BluetoothGattCallback mGattCallback = new AmbientInfoGattCallback(this);
+            mConnection = device.connectGatt(this, false, mGattCallback);
+            return;
         }
-        broadcastActionConnection(false, "Invalid Address");
+        broadcastActionConnection(false, "Invalid Device");
     }
 
     @Nullable
@@ -162,6 +160,7 @@ public class AmbientInfoService extends Service implements AmbientInfoGattCallba
         Log.i(TAG, "onDestroy");
 
         AmbientInfoService.isRunning = false;
+        AmbientInfoService.connectedDevice = null;
         if (mConnection != null)
             mConnection.close();
     }
