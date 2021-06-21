@@ -9,6 +9,12 @@ import android.companion.CompanionDeviceManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
+import android.content.SharedPreferences;
+import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.IntentSenderRequest;
@@ -19,28 +25,27 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentResultListener;
 
-import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.widget.TextView;
-import android.widget.Toast;
-
 import manrique.nicolas.iotfridge.settings.SettingsActivity;
 
 public class MainActivity extends AppCompatActivity {
 
+    private static final String TAG = "MainActivity";
+
     private static final String TAG_FRAGMENT_DEVICE_INFO = "TAG_FRAGMENT_DEVICE_INFO";
     private static final String TAG_FRAGMENT_ACTIVE_AMBIENT = "TAG_FRAGMENT_ACTIVE_AMBIENT_INFO";
+
     public static final String EXTRA_DEVICE = "EXTRA_DEVICE";
 
     public static final String REQUEST_START_AMBIENT_SERVICE = "REQUEST_START_AMBIENT_SERVICE";
     public static final String REQUEST_CLOSE_AMBIENT_SERVICE = "REQUEST_CLOSE_AMBIENT_SERVICE";
 
-    private static final String TAG = "MainActivity";
+    public static final String PREFERENCES_DEVICE_ADDRESS = "PREFERENCES_DEVICE";
+
 
     private TextView mTvBackground;
     private BluetoothDevice mDevice;
     private Context mContext;
+    private BluetoothAdapter mBluetoothAdapter;
 
 
     @Override
@@ -53,16 +58,16 @@ public class MainActivity extends AppCompatActivity {
 
         mContext = this;
         mTvBackground = findViewById(R.id.tvBackground);
-        BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
         if (AmbientInfoService.isRunning) {
             mDevice = AmbientInfoService.deviceConnected;
             setAmbientInfoFragment();
 
-        } else if (bluetoothAdapter == null) {
+        } else if (mBluetoothAdapter == null) {
             mTvBackground.setText("Bluetooth Not Supported");
 
-        } else if (bluetoothAdapter.isEnabled()) {
+        } else if (mBluetoothAdapter.isEnabled()) {
             askToConnectDevice();
 
         } else {
@@ -150,12 +155,21 @@ public class MainActivity extends AppCompatActivity {
                         Toast.makeText(this, "Device wans't connected correctly.", Toast.LENGTH_SHORT).show();
                         askToConnectDevice();
                     } else {
+                        setPreferencesDevice(mDevice);
                         setDeviceFragment();
                     }
                 }
             });
 
     private void askToConnectDevice() {
+        if (mDevice == null)
+            mDevice = getPreferencesDevice();
+
+        if (mDevice != null) {
+            setDeviceFragment();
+            return;
+        }
+
         CompanionDeviceManager deviceManager = (CompanionDeviceManager) getSystemService(
                 Context.COMPANION_DEVICE_SERVICE
         );
@@ -182,6 +196,24 @@ public class MainActivity extends AppCompatActivity {
                 mTvBackground.setText("Something went wrong selecting devices.");
             }
         }, null);
+    }
+
+
+    private BluetoothDevice getPreferencesDevice() {
+        SharedPreferences preferences = getPreferences(MODE_PRIVATE);
+        String deviceAddress = preferences.getString(PREFERENCES_DEVICE_ADDRESS, null);
+        try {
+            return mBluetoothAdapter.getRemoteDevice(deviceAddress);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
+
+    private void setPreferencesDevice(BluetoothDevice device) {
+        SharedPreferences sharedPref = getPreferences(Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPref.edit();
+        editor.putString(PREFERENCES_DEVICE_ADDRESS, device.getAddress());
+        editor.apply();
     }
 
 
