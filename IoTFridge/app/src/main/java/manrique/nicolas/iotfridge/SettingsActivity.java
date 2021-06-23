@@ -1,8 +1,6 @@
-package manrique.nicolas.iotfridge.settings;
+package manrique.nicolas.iotfridge;
 
 import androidx.appcompat.app.AppCompatActivity;
-
-import manrique.nicolas.iotfridge.R;
 
 import android.os.Bundle;
 

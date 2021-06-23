@@ -16,7 +16,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AppCompat.Light.NoActionBar">
 
-        <activity android:name=".settings.SettingsActivity"></activity>
+        <activity android:name=".SettingsActivity"></activity>
 
         <service
             android:name=".AmbientInfoService"

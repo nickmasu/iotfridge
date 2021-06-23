@@ -25,8 +25,6 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentResultListener;
 
-import manrique.nicolas.iotfridge.settings.SettingsActivity;
-
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity";

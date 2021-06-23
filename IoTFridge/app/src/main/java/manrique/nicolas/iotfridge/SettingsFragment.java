@@ -1,4 +1,4 @@
-package manrique.nicolas.iotfridge.settings;
+package manrique.nicolas.iotfridge;
 
 import android.os.Bundle;
 
