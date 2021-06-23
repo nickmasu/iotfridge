@@ -23,6 +23,7 @@ public class AmbientInfoFragment extends Fragment implements View.OnClickListene
     private TextView mTvBattery;
     private Button mBtDisconnect;
     private IntentFilter mIntentFilter;
+    private ArrowView avTemperature;
 
 
     public AmbientInfoFragment() {
@@ -65,6 +66,7 @@ public class AmbientInfoFragment extends Fragment implements View.OnClickListene
         mTvTemperature = view.findViewById(R.id.tvTemperature);
         mTvHumidity = view.findViewById(R.id.tvHumidity);
         mTvBattery = view.findViewById(R.id.tvBattery);
+        avTemperature = view.findViewById(R.id.avTemperature);
 
         mBtDisconnect = view.findViewById(R.id.btDisconnect);
         mBtDisconnect.setOnClickListener(this);
@@ -85,6 +87,8 @@ public class AmbientInfoFragment extends Fragment implements View.OnClickListene
         mTvTemperature.setText("Temperature : " + String.valueOf(temperature));
         mTvHumidity.setText("Humidity : " + String.valueOf(humidity));
         mTvBattery.setText("Battery : " + String.valueOf(battery));
+
+        avTemperature.setCurrentTemperature(temperature);
     }
 
     @Override
