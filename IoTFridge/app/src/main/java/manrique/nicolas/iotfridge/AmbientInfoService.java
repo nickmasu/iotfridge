@@ -101,9 +101,7 @@ public class AmbientInfoService extends Service implements AmbientInfoGattCallba
                     .setOngoing(true);
         }
 
-        mNotifyAmbientBuilder.setContentText(String.valueOf(temperature) + " Cº  -  "
-                + String.valueOf(humidity) + " H  -  "
-                + String.valueOf(battery) + " %  Charge");
+        mNotifyAmbientBuilder.setContentText(String.format("%.1f ºC   -   RH %d %%   -   Charge %d %%", temperature, (int) humidity, (int) battery));
         // Sets an ID for the notification, so it can be updated
         final int notifyID = 1;
         mNotificationManager.notify(notifyID, mNotifyAmbientBuilder.build());
@@ -113,10 +111,9 @@ public class AmbientInfoService extends Service implements AmbientInfoGattCallba
         if (mNotifyWarningBuilder == null) {
             mNotifyWarningBuilder = new NotificationCompat.Builder(this, CHANNEL_WARNING_ID);
             mNotifyWarningBuilder
-                    .setSmallIcon(R.drawable.ic_launcher_background)
-                    .setContentTitle("Warning");
+                    .setSmallIcon(R.drawable.ic_launcher_background);
         }
-        mNotifyWarningBuilder.setContentText(message);
+        mNotifyWarningBuilder.setContentText("WARNING : " + message);
         // Sets an ID for the notification, so it can be updated
         final int notifyID = 2;
         mNotificationManager.notify(notifyID, mNotifyWarningBuilder.build());
@@ -212,7 +209,7 @@ public class AmbientInfoService extends Service implements AmbientInfoGattCallba
     public void onConnectionError(String error) {
         Log.i(TAG, "onConnectionError " + error);
         if (isDisconnectedDeviceEnable)
-            notifyWarning("Device disconnected");
+            notifyWarning("Warning bluetooth disconnected");
         broadcastActionConnection(false, error);
     }
 
@@ -230,13 +227,13 @@ public class AmbientInfoService extends Service implements AmbientInfoGattCallba
         loadPreferences();
 
         if (isMinimumTemperatureEnable && temperature <= minimumTemperature)
-            notifyWarning("Warning Temperature so low");
+            notifyWarning(String.format("The cold chain has been broken %.1f ºC", temperature));
 
         if (isMaximumTemperatureEnable && temperature >= maximumTemperature)
-            notifyWarning("Warning Temperature so high");
+            notifyWarning(String.format("The cold chain has been broken %.1f ºC", temperature));
 
         if (isMinimumBatteryEnable && temperature <= minimumBattery)
-            notifyWarning("Warning Battery level so low");
+            notifyWarning("Battery too low " + (int) battery + " %");
 
         notifyAmbient(temperature, humidity, battery);
         broadcastActionAmbientInfo(temperature, humidity, battery);
