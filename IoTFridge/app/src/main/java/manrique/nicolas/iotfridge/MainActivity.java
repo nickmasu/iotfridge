@@ -239,11 +239,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        Fragment fragment = getSupportFragmentManager().findFragmentByTag(TAG_FRAGMENT_DEVICE_INFO);
-        if (fragment != null)
-            getSupportFragmentManager().beginTransaction().remove(fragment).commit();
-
-        // askToConnectDevice();
+        // do Nothing
     }
 
     private void setAmbientInfoFragment() {

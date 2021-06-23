@@ -38,8 +38,8 @@ public class DeviceFragment extends Fragment {
         Button mBtConnect = view.findViewById(R.id.btConnect);
         Button mBtForget = view.findViewById(R.id.btForget);
 
-        mTvName.setText("Name : " + mDevice.getName());
-        mTvAddress.setText("Address : " + mDevice.getAddress());
+        mTvName.setText(mDevice.getName());
+        mTvAddress.setText(mDevice.getAddress());
 
 
         mBtConnect.setOnClickListener(new View.OnClickListener() {

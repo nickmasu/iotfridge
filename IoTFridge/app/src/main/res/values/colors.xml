@@ -18,4 +18,6 @@
     <color name="primaryDarkColor">#5d99c6</color>
     <color name="primaryTextColor">#000000</color>
 
+    <color name="secondaryColor">#FF6363</color>
+
 </resources>
