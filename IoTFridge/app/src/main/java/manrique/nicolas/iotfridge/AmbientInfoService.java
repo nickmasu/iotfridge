@@ -97,7 +97,7 @@ public class AmbientInfoService extends Service implements AmbientInfoGattCallba
                     .setOngoing(true)
                     .setOnlyAlertOnce(true)
                     .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
-                    .setSmallIcon(R.drawable.ic_launcher_background)
+                    .setSmallIcon(R.drawable.ic_launcher_mini)
                     .setOngoing(true);
         }
 
@@ -111,7 +111,7 @@ public class AmbientInfoService extends Service implements AmbientInfoGattCallba
         if (mNotifyWarningBuilder == null) {
             mNotifyWarningBuilder = new NotificationCompat.Builder(this, CHANNEL_WARNING_ID);
             mNotifyWarningBuilder
-                    .setSmallIcon(R.drawable.ic_launcher_background);
+                    .setSmallIcon(R.drawable.ic_launcher_mini);
         }
         mNotifyWarningBuilder.setContentText("WARNING : " + message);
         // Sets an ID for the notification, so it can be updated
