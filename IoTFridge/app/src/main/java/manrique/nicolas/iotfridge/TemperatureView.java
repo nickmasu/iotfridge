@@ -7,7 +7,6 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
-import android.graphics.Path;
 import android.graphics.Typeface;
 import android.util.AttributeSet;
 import android.view.View;
@@ -26,8 +25,6 @@ public class TemperatureView extends View {
     private Bitmap bitmapMaximum;
 
     private float currentTemperature;
-    private float minimumTemperature;
-    private float maximumTemperature;
 
     private boolean minimumTemperatureEnable;
     private boolean maximumTemperatureEnable;
@@ -62,18 +59,12 @@ public class TemperatureView extends View {
 
     @Override
     public void onDraw(Canvas canvas) {
-        //Paint Background
-        Paint background = new Paint();
-        background.setColor(Color.RED);
-        //canvas.drawRect(0, 0, getWidth(), getHeight(), background);
         // draw text
         drawLowLimit(canvas);
         drawHighLimit(canvas);
         drawTemperature(canvas);
 
-
         // draw widget
-
         canvas.drawBitmap(bitmapArrow, currentTemperaturePosition, null);
 
         if (maximumTemperatureEnable)
@@ -107,7 +98,6 @@ public class TemperatureView extends View {
     }
 
     public void setMaximumTemperature(float temperature) {
-        maximumTemperature = temperature;
         maximumTemperatureEnable = true;
         maximumTemperaturePosition = calculatePosition(temperature);
         invalidate();
@@ -119,7 +109,6 @@ public class TemperatureView extends View {
     }
 
     public void setMinimumTemperature(float temperature) {
-        minimumTemperature = temperature;
         minimumTemperatureEnable = true;
         minimumTemperaturePosition = calculatePosition(temperature);
         invalidate();
@@ -131,7 +120,7 @@ public class TemperatureView extends View {
     }
 
 
-    public void drawLowLimit(Canvas canvas) {
+    private void drawLowLimit(Canvas canvas) {
         int margin = 70;
         String text = "0 Cº";
         int positionY = (SIZE / 2) + margin;
@@ -143,7 +132,7 @@ public class TemperatureView extends View {
         canvas.drawText(text, positionX, positionY, paint);
     }
 
-    public void drawHighLimit(Canvas canvas) {
+    private void drawHighLimit(Canvas canvas) {
         int margin = 70;
         String text = String.format("%d Cº", (int) TEMPERATURE_REFERENCE * 2);
         int positionY = (SIZE / 2) + margin;
@@ -155,7 +144,7 @@ public class TemperatureView extends View {
         canvas.drawText(text, positionX, positionY, paint);
     }
 
-    public void drawTemperature(Canvas canvas) {
+    private void drawTemperature(Canvas canvas) {
         String text = String.format("%.1f Cº", currentTemperature);
         int positionY = (SIZE / 2) + 120;
         int positionX = (SIZE / 2) - 120;
