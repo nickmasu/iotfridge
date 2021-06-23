@@ -7,13 +7,6 @@
     tools:context=".AmbientInfoFragment">
 
 
-
-    <TextView
-        android:id="@+id/tvTemperature"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textSize="24sp" />
-
     <TextView
         android:id="@+id/tvHumidity"
         android:layout_width="match_parent"
@@ -29,12 +22,29 @@
     <View
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_weight="1" />
+        android:layout_weight="2" />
 
-    <manrique.nicolas.iotfridge.TemperatureView
-        android:id="@+id/avTemperature"
+    <androidx.appcompat.widget.LinearLayoutCompat
         android:layout_width="wrap_content"
-        android:layout_height="300dp"/>
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <manrique.nicolas.iotfridge.TemperatureView
+            android:id="@+id/avTemperature"
+            android:layout_width="720px"
+            android:layout_height="520px" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+    </androidx.appcompat.widget.LinearLayoutCompat>
+
 
     <androidx.appcompat.widget.AppCompatButton
         android:id="@+id/btDisconnect"

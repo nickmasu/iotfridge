@@ -20,7 +20,6 @@ import android.widget.TextView;
 public class AmbientInfoFragment extends Fragment implements View.OnClickListener {
 
     private BroadcastReceiver mReceiver;
-    private TextView mTvTemperature;
     private TextView mTvHumidity;
     private TextView mTvBattery;
     private Button mBtDisconnect;
@@ -68,11 +67,11 @@ public class AmbientInfoFragment extends Fragment implements View.OnClickListene
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_ambient_info, container, false);
 
-        mTvTemperature = view.findViewById(R.id.tvTemperature);
-        mTvTemperature.setText("Temperature = " + AmbientInfoService.currentTemperature);
-
         mTvHumidity = view.findViewById(R.id.tvHumidity);
+        mTvHumidity.setText("humidity  = " + AmbientInfoService.currentHumidity);
+
         mTvBattery = view.findViewById(R.id.tvBattery);
+        mTvBattery.setText("battery = " + AmbientInfoService.currentHumidity);
 
         avTemperature = view.findViewById(R.id.avTemperature);
         avTemperature.setCurrentTemperature(AmbientInfoService.currentTemperature);
@@ -113,7 +112,6 @@ public class AmbientInfoFragment extends Fragment implements View.OnClickListene
     }
 
     private void updateAmbientInfo(float temperature, float humidity, float battery) {
-        mTvTemperature.setText("Temperature : " + String.valueOf(temperature));
         mTvHumidity.setText("Humidity : " + String.valueOf(humidity));
         mTvBattery.setText("Battery : " + String.valueOf(battery));
 

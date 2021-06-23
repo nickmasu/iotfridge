@@ -8,6 +8,7 @@ import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.Typeface;
 import android.util.AttributeSet;
 import android.view.View;
 
@@ -15,7 +16,7 @@ import androidx.annotation.Nullable;
 
 public class TemperatureView extends View {
 
-    private int SIZE = 512;
+    private int SIZE = 720;
     private float TEMPERATURE_REFERENCE = 20;
 
 
@@ -65,6 +66,13 @@ public class TemperatureView extends View {
         Paint background = new Paint();
         background.setColor(Color.RED);
         //canvas.drawRect(0, 0, getWidth(), getHeight(), background);
+        // draw text
+        drawLowLimit(canvas);
+        drawHighLimit(canvas);
+        drawTemperature(canvas);
+
+
+        // draw widget
 
         canvas.drawBitmap(bitmapArrow, currentTemperaturePosition, null);
 
@@ -74,6 +82,7 @@ public class TemperatureView extends View {
             canvas.drawBitmap(bitmapMinimum, minimumTemperaturePosition, null);
 
         canvas.drawBitmap(bitmapBackground, new Matrix(), null);
+
 
     }
 
@@ -121,14 +130,41 @@ public class TemperatureView extends View {
         invalidate();
     }
 
-    public void drawText(Canvas canvas) {
-        Paint paint = new Paint();
-        paint.setColor(Color.WHITE);
-        paint.setStyle(Paint.Style.FILL);
-        canvas.drawPaint(paint);
 
+    public void drawLowLimit(Canvas canvas) {
+        int margin = 70;
+        String text = "0 Cº";
+        int positionY = (SIZE / 2) + margin;
+        int positionX = 0;
+
+        Paint paint = new Paint();
+        paint.setColor(Color.BLUE);
+        paint.setTextSize(42);
+        canvas.drawText(text, positionX, positionY, paint);
+    }
+
+    public void drawHighLimit(Canvas canvas) {
+        int margin = 70;
+        String text = String.format("%d Cº", (int) TEMPERATURE_REFERENCE * 2);
+        int positionY = (SIZE / 2) + margin;
+        int positionX = SIZE - margin - 50;
+
+        Paint paint = new Paint();
+        paint.setColor(Color.RED);
+        paint.setTextSize(42);
+        canvas.drawText(text, positionX, positionY, paint);
+    }
+
+    public void drawTemperature(Canvas canvas) {
+        String text = String.format("%.1f Cº", currentTemperature);
+        int positionY = (SIZE / 2) + 120;
+        int positionX = (SIZE / 2) - 120;
+
+        Paint paint = new Paint();
         paint.setColor(Color.BLACK);
-        paint.setTextSize(20);
-        canvas.drawText("Some Text", 10, 25, paint);
+        paint.setTextSize(68);
+        paint.setTypeface(Typeface.create(Typeface.SERIF, Typeface.BOLD));
+
+        canvas.drawText(text, positionX, positionY, paint);
     }
 }
