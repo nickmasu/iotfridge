@@ -69,9 +69,13 @@ public class AmbientInfoFragment extends Fragment implements View.OnClickListene
         View view = inflater.inflate(R.layout.fragment_ambient_info, container, false);
 
         mTvTemperature = view.findViewById(R.id.tvTemperature);
+        mTvTemperature.setText("Temperature = " + AmbientInfoService.currentTemperature);
+
         mTvHumidity = view.findViewById(R.id.tvHumidity);
         mTvBattery = view.findViewById(R.id.tvBattery);
+
         avTemperature = view.findViewById(R.id.avTemperature);
+        avTemperature.setCurrentTemperature(AmbientInfoService.currentTemperature);
 
         mBtDisconnect = view.findViewById(R.id.btDisconnect);
         mBtDisconnect.setOnClickListener(this);

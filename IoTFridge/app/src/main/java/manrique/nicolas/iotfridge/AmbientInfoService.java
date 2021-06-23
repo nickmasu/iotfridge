@@ -23,6 +23,10 @@ import java.util.Random;
 public class AmbientInfoService extends Service implements AmbientInfoGattCallback.Listener {
 
     public static boolean isRunning = false;
+    public static float currentTemperature;
+    public static float currentHumidity;
+    public static float currentBattery;
+
     public static BluetoothDevice deviceConnected = null;
 
     /* --------------------------------------------------------------------- */
@@ -82,6 +86,10 @@ public class AmbientInfoService extends Service implements AmbientInfoGattCallba
 
 
     private void notifyAmbient(float temperature, float humidity, float battery) {
+        currentTemperature = temperature;
+        currentHumidity = humidity;
+        currentBattery = battery;
+
         if (mNotifyAmbientBuilder == null) {
             mNotifyAmbientBuilder = new NotificationCompat.Builder(this, CHANNEL_WARNING_ID);
             mNotifyAmbientBuilder
