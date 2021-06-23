@@ -13,10 +13,10 @@ import android.view.View;
 
 import androidx.annotation.Nullable;
 
-public class ArrowView extends View {
+public class TemperatureView extends View {
 
     private int SIZE = 512;
-    private float TEMPERATURE_REFERENCE = 25;
+    private float TEMPERATURE_REFERENCE = 20;
 
 
     private Bitmap bitmapBackground;
@@ -35,12 +35,12 @@ public class ArrowView extends View {
     private Matrix minimumTemperaturePosition;
     private Matrix maximumTemperaturePosition;
 
-    public ArrowView(Context context) {
+    public TemperatureView(Context context) {
         super(context);
         initBitmaps();
     }
 
-    public ArrowView(Context context, @Nullable AttributeSet attrs) {
+    public TemperatureView(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
         initBitmaps();
     }
@@ -64,15 +64,17 @@ public class ArrowView extends View {
         //Paint Background
         Paint background = new Paint();
         background.setColor(Color.RED);
-        canvas.drawRect(0, 0, getWidth(), getHeight(), background);
+        //canvas.drawRect(0, 0, getWidth(), getHeight(), background);
 
-        canvas.drawBitmap(bitmapBackground, new Matrix(), null);
         canvas.drawBitmap(bitmapArrow, currentTemperaturePosition, null);
 
         if (maximumTemperatureEnable)
             canvas.drawBitmap(bitmapMaximum, maximumTemperaturePosition, null);
         if (minimumTemperatureEnable)
-            canvas.drawBitmap(bitmapMaximum, minimumTemperaturePosition, null);
+            canvas.drawBitmap(bitmapMinimum, minimumTemperaturePosition, null);
+
+        canvas.drawBitmap(bitmapBackground, new Matrix(), null);
+
     }
 
 
@@ -117,5 +119,16 @@ public class ArrowView extends View {
     public void removeMinimumTemperature() {
         minimumTemperatureEnable = false;
         invalidate();
+    }
+
+    public void drawText(Canvas canvas) {
+        Paint paint = new Paint();
+        paint.setColor(Color.WHITE);
+        paint.setStyle(Paint.Style.FILL);
+        canvas.drawPaint(paint);
+
+        paint.setColor(Color.BLACK);
+        paint.setTextSize(20);
+        canvas.drawText("Some Text", 10, 25, paint);
     }
 }

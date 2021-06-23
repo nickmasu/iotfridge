@@ -55,6 +55,7 @@ public class AmbientInfoService extends Service implements AmbientInfoGattCallba
     private boolean isMinimumBatteryEnable;
     private float minimumBattery;
     private boolean isDisconnectedDeviceEnable;
+    private SharedPreferences mSharedPred;
 
     @Override
     public void onCreate() {
@@ -124,14 +125,8 @@ public class AmbientInfoService extends Service implements AmbientInfoGattCallba
         AmbientInfoService.isRunning = true;
         AmbientInfoService.deviceConnected = device;
 
-        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-        sharedPref.registerOnSharedPreferenceChangeListener(new SharedPreferences.OnSharedPreferenceChangeListener() {
-            @Override
-            public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-                loadPreferences(sharedPref);
-            }
-        });
-        loadPreferences(sharedPref);
+        mSharedPred = PreferenceManager.getDefaultSharedPreferences(this);
+        loadPreferences();
 
         //do heavy work on a background thread
         connectMockup(device);
@@ -139,18 +134,18 @@ public class AmbientInfoService extends Service implements AmbientInfoGattCallba
         return START_NOT_STICKY;
     }
 
-    private void loadPreferences(SharedPreferences sharedPref) {
+    private void loadPreferences() {
 
-        isMinimumTemperatureEnable = sharedPref.getBoolean("minimumTemperatureEnable", false);
-        minimumTemperature = Float.valueOf(sharedPref.getString("minimumTemperature", "-100"));
+        isMinimumTemperatureEnable = mSharedPred.getBoolean("minimumTemperatureEnable", false);
+        minimumTemperature = Float.valueOf(mSharedPred.getString("minimumTemperature", "-100"));
 
-        isMaximumTemperatureEnable = sharedPref.getBoolean("maximumTemperatureEnable", false);
-        maximumTemperature = Float.valueOf(sharedPref.getString("maximumTemperature", "100"));
+        isMaximumTemperatureEnable = mSharedPred.getBoolean("maximumTemperatureEnable", false);
+        maximumTemperature = Float.valueOf(mSharedPred.getString("maximumTemperature", "100"));
 
-        isMinimumBatteryEnable = sharedPref.getBoolean("batteryEnable", false);
-        minimumBattery = Float.valueOf(sharedPref.getString("minimumBattery", "-100"));
+        isMinimumBatteryEnable = mSharedPred.getBoolean("batteryEnable", false);
+        minimumBattery = Float.valueOf(mSharedPred.getString("minimumBattery", "-100"));
 
-        isDisconnectedDeviceEnable = sharedPref.getBoolean("disconnectedEnable", false);
+        isDisconnectedDeviceEnable = mSharedPred.getBoolean("disconnectedEnable", false);
     }
 
     private void connectMockup(BluetoothDevice device) {
@@ -224,6 +219,7 @@ public class AmbientInfoService extends Service implements AmbientInfoGattCallba
     @Override
     public void onAmbientChanged(float temperature, float humidity, float battery) {
         Log.i(TAG, "onAmbientChanged " + temperature);
+        loadPreferences();
 
         if (isMinimumTemperatureEnable && temperature <= minimumTemperature)
             notifyWarning("Warning Temperature so low");

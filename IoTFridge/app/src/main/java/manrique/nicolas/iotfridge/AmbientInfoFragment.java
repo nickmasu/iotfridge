@@ -4,9 +4,11 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
+import androidx.preference.PreferenceManager;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -23,7 +25,8 @@ public class AmbientInfoFragment extends Fragment implements View.OnClickListene
     private TextView mTvBattery;
     private Button mBtDisconnect;
     private IntentFilter mIntentFilter;
-    private ArrowView avTemperature;
+    private TemperatureView avTemperature;
+    private SharedPreferences mSharedPref;
 
 
     public AmbientInfoFragment() {
@@ -33,6 +36,7 @@ public class AmbientInfoFragment extends Fragment implements View.OnClickListene
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mSharedPref = PreferenceManager.getDefaultSharedPreferences(getContext());
 
         mIntentFilter = new IntentFilter();
         mIntentFilter.addAction(AmbientInfoService.ACTION_CONNECTION_STATUS);
@@ -54,6 +58,7 @@ public class AmbientInfoFragment extends Fragment implements View.OnClickListene
                 }
             }
         };
+
     }
 
 
@@ -70,7 +75,27 @@ public class AmbientInfoFragment extends Fragment implements View.OnClickListene
 
         mBtDisconnect = view.findViewById(R.id.btDisconnect);
         mBtDisconnect.setOnClickListener(this);
+
+        loadPreferences(mSharedPref);
+
         return view;
+    }
+
+
+    private void loadPreferences(SharedPreferences sharedPref) {
+        boolean minimumTemperatureEnable = sharedPref.getBoolean("minimumTemperatureEnable", false);
+        float minimumTemperature = Float.valueOf(sharedPref.getString("minimumTemperature", "-100"));
+        if (minimumTemperatureEnable)
+            avTemperature.setMinimumTemperature(minimumTemperature);
+        else
+            avTemperature.removeMinimumTemperature();
+
+        boolean maximumTemperatureEnable = sharedPref.getBoolean("maximumTemperatureEnable", false);
+        float maximumTemperature = Float.valueOf(sharedPref.getString("maximumTemperature", "100"));
+        if (maximumTemperatureEnable)
+            avTemperature.setMaximumTemperature(maximumTemperature);
+        else
+            avTemperature.removeMaximumTemperature();
     }
 
     @Override
@@ -95,6 +120,7 @@ public class AmbientInfoFragment extends Fragment implements View.OnClickListene
     public void onResume() {
         super.onResume();
         requireActivity().registerReceiver(mReceiver, mIntentFilter);
+        loadPreferences(mSharedPref);
     }
 
     @Override
