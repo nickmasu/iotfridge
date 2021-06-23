@@ -8,6 +8,10 @@ import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothProfile;
 import android.util.Log;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 public class AmbientInfoGattCallback extends BluetoothGattCallback {
@@ -91,9 +95,14 @@ public class AmbientInfoGattCallback extends BluetoothGattCallback {
 
     @Override
     public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
-        float temperature = Float.parseFloat(characteristic.getStringValue(0));
-        mListener.onAmbientChanged(temperature, temperature + 100, temperature % 100);
-        Log.d(TAG, "GATT CALLBACK : onCharacteristicChanged" + temperature);
+      String[] input = characteristic.getStringValue(0).split(",");
+        float temperature = Float.valueOf(input[0]);
+        float battery = Float.valueOf(input[1]);
+        float humidity = Float.valueOf(input[2]);
+
+        mListener.onAmbientChanged(temperature, humidity, battery);
+
+        Log.d(TAG, "GATT CALLBACK : onCharacteristicChanged ==" + input);
     }
 
 }
