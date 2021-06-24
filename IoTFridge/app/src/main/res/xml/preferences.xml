@@ -1,45 +1,68 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
+    <PreferenceCategory app:title="Temperature Range">
 
-    <SwitchPreference
-        android:key="minimumTemperatureEnable"
-        android:title="Enable notification for minimum temperature" />
+        <EditTextPreference
+            android:defaultValue="0"
+            android:inputType="numberDecimal"
+            android:key="lowerRangeTemperature"
+            android:title="Lower Temperature ºC"
+            app:useSimpleSummaryProvider="true" />
 
-    <EditTextPreference
-        android:defaultValue="5"
-        android:dependency="minimumTemperatureEnable"
-        android:inputType="numberDecimal"
-        android:key="minimumTemperature"
-        android:title="Minimum Temperature"
-        app:useSimpleSummaryProvider="true" />
+        <EditTextPreference
+            android:defaultValue="30"
+            android:inputType="numberDecimal"
+            android:key="higherRangeTemperature"
+            android:title="Higher Temperature ºC"
+            app:useSimpleSummaryProvider="true" />
 
-    <SwitchPreference
-        android:key="maximumTemperatureEnable"
-        android:title="Enable notification for maximum temperature" />
+    </PreferenceCategory>
 
-    <EditTextPreference
-        android:defaultValue="30"
-        android:dependency="maximumTemperatureEnable"
-        android:inputType="numberDecimal"
-        android:key="maximumTemperature"
-        android:title="Maximum Temperature"
-        app:useSimpleSummaryProvider="true" />
 
-    <SwitchPreference
-        android:key="batteryEnable"
-        android:title="Enable notification for low battery" />
+    <PreferenceCategory app:title="Notifications">
 
-    <EditTextPreference
-        android:defaultValue="20"
-        android:dependency="batteryEnable"
-        android:inputType="numberDecimal"
-        android:key="minimumBattery"
-        android:title="Minimum Battery"
-        app:useSimpleSummaryProvider="true" />
+        <SwitchPreference
+            android:key="minimumTemperatureEnable"
+            android:title="Enable Minimum Temperature" />
 
-    <SwitchPreference
-        android:key="disconnectedEnable"
-        android:title="Enable notification for device disconnected" />
+        <EditTextPreference
+            android:defaultValue="5"
+            android:dependency="minimumTemperatureEnable"
+            android:inputType="numberDecimal"
+            android:key="minimumTemperature"
+            android:title="Minimum Temperature ºC"
+            app:useSimpleSummaryProvider="true" />
+
+
+        <SwitchPreference
+            android:key="maximumTemperatureEnable"
+            android:title="Enable Maximum Temperature" />
+
+        <EditTextPreference
+            android:defaultValue="30"
+            android:dependency="maximumTemperatureEnable"
+            android:inputType="numberDecimal"
+            android:key="maximumTemperature"
+            android:title="Maximum Temperature ºC"
+            app:useSimpleSummaryProvider="true" />
+
+        <SwitchPreference
+            android:key="batteryEnable"
+            android:title="Enable Battery low" />
+
+        <EditTextPreference
+            android:defaultValue="20"
+            android:dependency="batteryEnable"
+            android:inputType="numberDecimal"
+            android:key="minimumBattery"
+            android:title="Minimum Battery %"
+            app:useSimpleSummaryProvider="true" />
+
+
+        <SwitchPreference
+            android:key="disconnectedEnable"
+            android:title="Enable device disconnected" />
+    </PreferenceCategory>
 
 </PreferenceScreen>

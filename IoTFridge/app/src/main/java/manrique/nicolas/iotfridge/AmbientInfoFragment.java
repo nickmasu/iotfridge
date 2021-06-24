@@ -99,6 +99,11 @@ public class AmbientInfoFragment extends Fragment implements View.OnClickListene
             avTemperature.setMaximumTemperature(maximumTemperature);
         else
             avTemperature.removeMaximumTemperature();
+
+        float higherRangeTemperature = Float.valueOf(sharedPref.getString("higherRangeTemperature", "50"));
+        float lowerRangeTemperature = Float.valueOf(sharedPref.getString("lowerRangeTemperature", "0"));
+
+        avTemperature.setRangeTemperature(lowerRangeTemperature, higherRangeTemperature);
     }
 
     @Override

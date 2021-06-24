@@ -16,8 +16,6 @@ import androidx.annotation.Nullable;
 public class TemperatureView extends View {
 
     private int SIZE = 720;
-    private float TEMPERATURE_REFERENCE = 20;
-
 
     private Bitmap bitmapBackground;
     private Bitmap bitmapArrow;
@@ -25,6 +23,10 @@ public class TemperatureView extends View {
     private Bitmap bitmapMaximum;
 
     private float currentTemperature;
+    private float lowerRangeTemperature;
+    private float higherRangeTemperature;
+    private float minimumTemperature;
+    private float maximumTemperature;
 
     private boolean minimumTemperatureEnable;
     private boolean maximumTemperatureEnable;
@@ -32,6 +34,7 @@ public class TemperatureView extends View {
     private Matrix currentTemperaturePosition = new Matrix();
     private Matrix minimumTemperaturePosition;
     private Matrix maximumTemperaturePosition;
+
 
     public TemperatureView(Context context) {
         super(context);
@@ -79,11 +82,9 @@ public class TemperatureView extends View {
 
 
     private Matrix calculatePosition(float temperature) {
-        float degrees = 0;
-        if (temperature > TEMPERATURE_REFERENCE)
-            degrees = (90 * (temperature - TEMPERATURE_REFERENCE)) / TEMPERATURE_REFERENCE;
-        else if (temperature < TEMPERATURE_REFERENCE)
-            degrees = (90 * (temperature) / TEMPERATURE_REFERENCE) - 90;
+        float tmp = temperature + Math.abs(lowerRangeTemperature);
+        float higherLimit = Math.abs(lowerRangeTemperature - higherRangeTemperature);
+        float degrees = ((tmp * 180) / higherLimit) - 90;
 
         Matrix position = new Matrix();
         position.postRotate(degrees, SIZE / 2, SIZE / 2);
@@ -92,13 +93,15 @@ public class TemperatureView extends View {
 
 
     public void setCurrentTemperature(float temperature) {
-        currentTemperature = temperature;
+        //float tmp = Math.max(temperature, lowerRangeTemperature);
+        //currentTemperature = Math.min(tmp, higherRangeTemperature);
         currentTemperaturePosition = calculatePosition(temperature);
         invalidate();
     }
 
     public void setMaximumTemperature(float temperature) {
         maximumTemperatureEnable = true;
+        maximumTemperature = temperature;
         maximumTemperaturePosition = calculatePosition(temperature);
         invalidate();
     }
@@ -110,9 +113,11 @@ public class TemperatureView extends View {
 
     public void setMinimumTemperature(float temperature) {
         minimumTemperatureEnable = true;
+        minimumTemperature = temperature;
         minimumTemperaturePosition = calculatePosition(temperature);
         invalidate();
     }
+
 
     public void removeMinimumTemperature() {
         minimumTemperatureEnable = false;
@@ -120,9 +125,18 @@ public class TemperatureView extends View {
     }
 
 
+    public void setRangeTemperature(float lowerTemperature, float higherTemperature) {
+        lowerRangeTemperature = lowerTemperature;
+        higherRangeTemperature = higherTemperature;
+        currentTemperaturePosition = calculatePosition(currentTemperature);
+        minimumTemperaturePosition = calculatePosition(minimumTemperature);
+        maximumTemperaturePosition = calculatePosition(maximumTemperature);
+        invalidate();
+    }
+
     private void drawLowLimit(Canvas canvas) {
         int margin = 70;
-        String text = "0 Cº";
+        String text = String.format("%d Cº", (int) lowerRangeTemperature);
         int positionY = (SIZE / 2) + margin;
         int positionX = 0;
 
@@ -134,7 +148,7 @@ public class TemperatureView extends View {
 
     private void drawHighLimit(Canvas canvas) {
         int margin = 70;
-        String text = String.format("%d Cº", (int) TEMPERATURE_REFERENCE * 2);
+        String text = String.format("%d Cº", (int) higherRangeTemperature);
         int positionY = (SIZE / 2) + margin;
         int positionX = SIZE - margin - 50;
 
