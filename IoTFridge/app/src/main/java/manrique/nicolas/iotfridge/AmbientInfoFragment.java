@@ -68,10 +68,10 @@ public class AmbientInfoFragment extends Fragment implements View.OnClickListene
         View view = inflater.inflate(R.layout.fragment_ambient_info, container, false);
 
         mTvHumidity = view.findViewById(R.id.tvHumidity);
-        mTvHumidity.setText("humidity  = " + AmbientInfoService.currentHumidity);
+        mTvHumidity.setText(String.format("%d %%", (int) AmbientInfoService.currentHumidity));
 
         mTvBattery = view.findViewById(R.id.tvBattery);
-        mTvBattery.setText("battery = " + AmbientInfoService.currentHumidity);
+        mTvBattery.setText(String.format("%d %%", (int) AmbientInfoService.currentBattery));
 
         avTemperature = view.findViewById(R.id.avTemperature);
         avTemperature.setCurrentTemperature(AmbientInfoService.currentTemperature);
@@ -117,8 +117,8 @@ public class AmbientInfoFragment extends Fragment implements View.OnClickListene
     }
 
     private void updateAmbientInfo(float temperature, float humidity, float battery) {
-        mTvHumidity.setText("Humidity : " + String.valueOf(humidity));
-        mTvBattery.setText("Battery : " + String.valueOf(battery));
+        mTvHumidity.setText(String.format("%d %%", (int) humidity));
+        mTvBattery.setText(String.format("%d %%", (int) battery));
 
         avTemperature.setCurrentTemperature(temperature);
     }
