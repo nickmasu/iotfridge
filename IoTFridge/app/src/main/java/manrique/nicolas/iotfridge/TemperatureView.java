@@ -95,6 +95,7 @@ public class TemperatureView extends View {
     public void setCurrentTemperature(float temperature) {
         //float tmp = Math.max(temperature, lowerRangeTemperature);
         //currentTemperature = Math.min(tmp, higherRangeTemperature);
+        currentTemperature = temperature;
         currentTemperaturePosition = calculatePosition(temperature);
         invalidate();
     }

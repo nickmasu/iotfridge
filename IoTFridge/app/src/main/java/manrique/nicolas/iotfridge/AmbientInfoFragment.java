@@ -119,7 +119,6 @@ public class AmbientInfoFragment extends Fragment implements View.OnClickListene
     private void updateAmbientInfo(float temperature, float humidity, float battery) {
         mTvHumidity.setText(String.format("%d %%", (int) humidity));
         mTvBattery.setText(String.format("%d %%", (int) battery));
-
         avTemperature.setCurrentTemperature(temperature);
     }
 

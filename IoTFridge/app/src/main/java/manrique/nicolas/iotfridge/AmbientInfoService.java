@@ -134,8 +134,8 @@ public class AmbientInfoService extends Service implements AmbientInfoGattCallba
         loadPreferences();
 
         //do heavy work on a background thread
-        connectMockup(device);
-        // connect(deviceAddress);
+        // connectMockup(device);
+        connect(device);
         return START_NOT_STICKY;
     }
 
